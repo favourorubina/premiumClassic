@@ -1,51 +1,13 @@
-import { prisma } from '@/lib/prisma';
-import { toTitleCase } from '@/lib/text';
-
-type PriceOption = {
-  label: string;
-  amount: number;
-};
-
-type MenuItem = {
-  id: string;
-  name: string;
-  category: string;
-  imageUrl: string;
-  description?: string | null;
-  pricesJson: PriceOption[];
-};
-
-type GroupedMenu = Record<string, MenuItem[]>;
-
-async function getMenuItems(): Promise<GroupedMenu> {
-  const items = await prisma.menuItem.findMany({
-    orderBy: [{ category: 'asc' }, { createdAt: 'asc' }],
-  });
-
-  const groups: GroupedMenu = {};
-
-  for (const item of items) {
-    const key = item.category.trim();
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push({
-      ...item,
-      pricesJson: (item.pricesJson as PriceOption[]) || [],
-    });
-  }
-
-  return groups;
-}
+import { toTitleCase } from "@/lib/text";
+import { getGroupedMenu } from "@/lib/menu";
 
 export default async function HomePage() {
-  const menuByCategory = await getMenuItems();
+  const menuByCategory: Record<string, Array<{ imageUrl: string; name: string }>> = await getGroupedMenu();
   const hasItems = Object.keys(menuByCategory).length > 0;
 
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">
       <div className="mx-auto max-w-6xl px-4 pb-12 pt-10 sm:px-6 lg:px-8 lg:pt-14">
-        {/* Hero */}
         <section className="grid gap-10 lg:grid-cols-[1.1fr,0.9fr] lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
@@ -61,10 +23,10 @@ export default async function HomePage() {
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <a
-                href="#menu"
+                href="/menu"
                 className="inline-flex items-center rounded-full bg-amber-700 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-amber-800"
               >
-                Browse the menu
+                View full menu
               </a>
               <p className="text-xs text-neutral-500">
                 Signature Cookie Box · Premium Cake &amp; Pastry Box · Dessert gifts 🎁
@@ -108,7 +70,7 @@ export default async function HomePage() {
                 <div>
                   <p className="font-semibold text-neutral-900">Dessert gifts for every occasion</p>
                   <p className="text-[11px] text-neutral-600">
-                    Build a Premium box that says “you’re special”.
+                    Build a Premium box that says “you&apos;re special”.
                   </p>
                 </div>
                 <span className="rounded-full border border-amber-300 bg-white px-3 py-1 text-[11px] font-medium text-amber-800">
@@ -119,16 +81,14 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Menu */}
-        <section id="menu" className="mt-12 border-t border-neutral-200 pt-8 sm:mt-14 sm:pt-10">
+        <section className="mt-12 border-t border-neutral-200 pt-8 sm:mt-14 sm:pt-10">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">
-                Menu
+                Today&apos;s treats
               </h2>
               <p className="mt-1 text-xs text-neutral-500 sm:text-sm">
-                Explore parfaits, cakes, banana breads, pastries, shawarma and drinks – all
-                curated with a Premium Classic touch.
+                A peek into the menu. Tap &quot;View full menu&quot; to see everything.
               </p>
             </div>
           </div>
@@ -141,58 +101,35 @@ export default async function HomePage() {
           )}
 
           {hasItems && (
-            <div className="mt-6 space-y-8">
-              {Object.entries(menuByCategory).map(([category, items]) => (
-                <div key={category} className="space-y-3">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-neutral-900 sm:text-base">
-                      {toTitleCase(category)}
-                    </h3>
-                    <span className="text-[11px] uppercase tracking-[0.16em] text-neutral-400">
-                      {items.length} option{items.length > 1 ? 's' : ''}
-                    </span>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {items.map(item => (
-                      <article
-                        key={item.id}
-                        className="flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white/90 shadow-sm"
-                      >
-                        <div className="h-32 w-full overflow-hidden bg-neutral-100">
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                          />
-                        </div>
-                        <div className="flex flex-1 flex-col p-3">
-                          <div>
-                            <h4 className="text-sm font-semibold text-neutral-900">
-                              {toTitleCase(item.name)}
-                            </h4>
-                            {item.description && (
-                              <p className="mt-1 text-xs leading-snug text-neutral-600">
-                                {item.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="mt-2 flex flex-wrap gap-1 text-[11px] font-medium text-neutral-800">
-                            {item.pricesJson.map(price => (
-                              <span
-                                key={price.label}
-                                className="rounded-full bg-amber-50 px-2 py-[3px] text-amber-900"
-                              >
-                                {price.label}: #{price.amount}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-              ))}
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Object.entries(menuByCategory)
+                .slice(0, 3)
+                .map(([category, items]) => {
+                  const first = items[0];
+                  return (
+                    <article
+                      key={category}
+                      className="overflow-hidden rounded-2xl border border-neutral-200 bg-white/90 shadow-sm"
+                    >
+                      <div className="h-32 w-full overflow-hidden bg-neutral-100">
+                        <img
+                          src={first.imageUrl}
+                          alt={first.name}
+                          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                      </div>
+                      <div className="p-3">
+                        <h3 className="text-sm font-semibold text-neutral-900">
+                          {toTitleCase(category)}
+                        </h3>
+                        <p className="mt-1 text-xs text-neutral-600">
+                          {items.slice(0, 3).map(i => toTitleCase(i.name)).join(" · ")}
+                          {items.length > 3 ? " +" : ""}
+                        </p>
+                      </div>
+                    </article>
+                  );
+                })}
             </div>
           )}
         </section>

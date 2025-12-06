@@ -1,4 +1,3 @@
-// components/SiteShell.tsx
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -21,7 +20,10 @@ function SiteNav() {
           </div>
         </div>
         <nav className="hidden items-center gap-4 text-xs font-medium text-neutral-700 sm:flex">
-          <a href="#menu" className="hover:text-amber-700">
+          <a href="/" className="hover:text-amber-700">
+            Home
+          </a>
+          <a href="/menu" className="hover:text-amber-700">
             Menu
           </a>
           <a href="#contact" className="hover:text-amber-700">
