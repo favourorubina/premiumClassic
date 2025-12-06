@@ -1,3 +1,4 @@
+// app/sweet-81985/page.tsx
 'use client';
 
 import Image from 'next/image';
@@ -18,6 +19,18 @@ type MenuItem = {
   pricesJson: PriceOption[];
 };
 
+const BASE_CATEGORIES = [
+  'Cake Parfait',
+  'Cake Slice',
+  'Parfait',
+  'Banana Bread (Medium size)',
+  'Mini Banana Bread',
+  'Pancake (Fluffy)',
+  'Pastries',
+  'Shawarma',
+  'Drink',
+];
+
 const emptyForm = {
   id: '',
   name: '',
@@ -35,6 +48,8 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
+  const [filterCategory, setFilterCategory] = useState('All');
 
   async function loadItems() {
     setLoading(true);
@@ -86,6 +101,7 @@ export default function AdminDashboard() {
     });
     setImageFile(null);
     setImagePreview(item.imageUrl);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function resetForm() {
@@ -167,6 +183,7 @@ export default function AdminDashboard() {
       if (!res.ok) {
         throw new Error('Failed to delete');
       }
+      setActiveItem(null);
       await loadItems();
     } catch {
       setError('Could not delete item.');
@@ -190,6 +207,18 @@ export default function AdminDashboard() {
   }
 
   const hasImage = !!imagePreview || !!form.imageUrl;
+
+  const categories = Array.from(
+    new Set([
+      ...BASE_CATEGORIES,
+      ...items.map(i => i.category).filter(Boolean),
+    ]),
+  );
+
+  const filteredItems =
+    filterCategory === 'All'
+      ? items
+      : items.filter(item => item.category === filterCategory);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#f7f2e9] via-[#fbf7ef] to-[#f1e6d6]">
@@ -239,15 +268,13 @@ export default function AdminDashboard() {
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-              Live menu dashboard
-            </span>
-            <span className="text-[11px] text-neutral-500">
               Changes here update what customers see on the menu.
             </span>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-neutral-500">
             <span className="rounded-full bg-neutral-100 px-2 py-1">
-              Total items: <span className="font-semibold text-neutral-900">{items.length}</span>
+              Total items:{' '}
+              <span className="font-semibold text-neutral-900">{items.length}</span>
             </span>
           </div>
         </div>
@@ -297,12 +324,18 @@ export default function AdminDashboard() {
                 <label className="mb-1 block text-xs font-medium text-neutral-700">
                   Category
                 </label>
-                <input
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                  placeholder="Cake Parfait"
+                <select
+                  className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                   value={form.category}
                   onChange={e => setForm({ ...form, category: e.target.value })}
-                />
+                >
+                  <option value="">Select a category</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="sm:col-span-2">
@@ -399,75 +432,69 @@ export default function AdminDashboard() {
           </section>
 
           <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-neutral-900">
                   Menu items
                 </h2>
                 <p className="mt-1 text-[11px] text-neutral-500">
-                  Edit or remove items currently visible on the menu.
+                  Tap an item to see details, edit or delete.
                 </p>
               </div>
-              {loading && (
-                <span className="text-[11px] text-neutral-500">Loading…</span>
-              )}
+              <div className="flex items-center gap-2 text-[11px]">
+                <label className="text-neutral-500">Filter:</label>
+                <select
+                  value={filterCategory}
+                  onChange={e => setFilterCategory(e.target.value)}
+                  className="rounded-full border border-neutral-300 bg-white px-2 py-1 text-[11px] text-neutral-800 outline-none hover:border-amber-400"
+                >
+                  <option value="All">All categories</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {!loading && items.length === 0 && (
+            {!loading && filteredItems.length === 0 && (
               <p className="mt-4 rounded-lg bg-neutral-50 px-3 py-3 text-xs text-neutral-500">
-                No items yet. Add your first Premium Classic treat on the left.
+                No items to show yet. Add your first Premium Classic treat on the left.
               </p>
             )}
 
-            {!loading && items.length > 0 && (
+            {loading && (
+              <p className="mt-4 text-[11px] text-neutral-500">Loading…</p>
+            )}
+
+            {!loading && filteredItems.length > 0 && (
               <ul className="mt-4 grid gap-3">
-                {items.map(item => (
+                {filteredItems.map(item => (
                   <li
                     key={item.id}
-                    className="flex gap-3 rounded-xl border border-neutral-200 bg-neutral-50/80 p-3"
+                    className="flex cursor-pointer gap-3 rounded-xl border border-neutral-200 bg-neutral-50/80 p-3 hover:border-amber-200 hover:bg-white"
+                    onClick={() => setActiveItem(item)}
                   >
-                    <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-200">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-200">
                       <img
                         src={item.imageUrl}
                         alt={item.name}
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    <div className="flex flex-1 flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="text-sm font-semibold text-neutral-900">
-                            {toTitleCase(item.name)}
-                          </h3>
-                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700">
-                            {toTitleCase(item.category)}
-                          </span>
-                        </div>
-                        {item.description && (
-                          <p className="mt-1 text-xs text-neutral-600">
-                            {item.description}
-                          </p>
-                        )}
-                        <p className="mt-1 text-xs font-medium text-neutral-800">
-                          {item.pricesJson
-                            .map(p => `${p.label}: #${p.amount}`)
-                            .join(' · ')}
-                        </p>
+                    <div className="flex flex-1 flex-col justify-center">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-semibold text-neutral-900">
+                          {toTitleCase(item.name)}
+                        </h3>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700">
+                          {toTitleCase(item.category)}
+                        </span>
                       </div>
-                      <div className="mt-2 flex gap-2">
-                        <button
-                          onClick={() => startEdit(item)}
-                          className="rounded-lg border border-neutral-300 bg-white px-3 py-1 text-[11px] font-medium text-neutral-700 hover:bg-neutral-100"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-medium text-red-700 hover:bg-red-100"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                      <p className="mt-[2px] line-clamp-1 text-[11px] text-neutral-500">
+                        {item.description || 'No description yet.'}
+                      </p>
                     </div>
                   </li>
                 ))}
@@ -476,6 +503,74 @@ export default function AdminDashboard() {
           </section>
         </div>
       </div>
+
+      {activeItem && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl sm:p-5">
+            <div className="mb-3 flex items-start justify-between gap-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+                  {toTitleCase(activeItem.category)}
+                </p>
+                <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
+                  {toTitleCase(activeItem.name)}
+                </h2>
+              </div>
+              <button
+                onClick={() => setActiveItem(null)}
+                className="rounded-full border border-neutral-200 bg-white px-2 py-1 text-[11px] text-neutral-600 hover:bg-neutral-100"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mb-3 h-40 w-full overflow-hidden rounded-xl bg-neutral-100">
+              <img
+                src={activeItem.imageUrl}
+                alt={activeItem.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            {activeItem.description && (
+              <p className="mb-2 text-xs text-neutral-700">
+                {activeItem.description}
+              </p>
+            )}
+
+            {activeItem.pricesJson && activeItem.pricesJson.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {activeItem.pricesJson.map(price => (
+                  <span
+                    key={price.label}
+                    className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800"
+                  >
+                    {price.label}: #{price.amount}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  startEdit(activeItem);
+                  setActiveItem(null);
+                }}
+                className="flex-1 rounded-lg bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:bg-black"
+              >
+                Edit item
+              </button>
+              <button
+                onClick={() => handleDelete(activeItem.id)}
+                className="flex-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

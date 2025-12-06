@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Urbanist } from "next/font/google";
 import "./globals.css";
-import { SiteShell } from "@/components/SiteShell";
+import ClientLayoutWrapper from "./ClientLayoutWrapper";
 
 const displayFont = Playfair_Display({
   variable: "--font-display",
@@ -21,18 +21,14 @@ export const metadata: Metadata = {
     "Premium Classic – cake parfaits, banana breads, pastries, shawarma and dessert gifts for every occasion.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${displayFont.variable} ${sansFont.variable}`}
     >
       <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
-        <SiteShell>{children}</SiteShell>
+        <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
       </body>
     </html>
   );
