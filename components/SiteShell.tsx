@@ -43,7 +43,6 @@ export function SiteShell({ children }: SiteShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Real contact links
   const phoneHref = 'tel:+2347072475343';
   const whatsappLink = 'https://wa.me/2348089464118';
   const instagramLink = 'https://www.instagram.com/premium81985';
@@ -51,6 +50,7 @@ export function SiteShell({ children }: SiteShellProps) {
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/menu', label: 'Menu' },
+    { href: '/about', label: 'About' },
   ];
 
   return (
