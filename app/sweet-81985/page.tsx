@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toTitleCase } from '@/lib/text';
 
 type PriceOption = {
@@ -47,6 +47,7 @@ export default function AdminDashboard() {
   const [imagePreview, setImagePreview] = useState('');
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
   const [filterCategory, setFilterCategory] = useState('All');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function loadItems() {
     setLoading(true);
@@ -101,6 +102,9 @@ export default function AdminDashboard() {
     });
     setImageFile(null);
     setImagePreview(item.imageUrl);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -108,6 +112,9 @@ export default function AdminDashboard() {
     setForm(emptyForm);
     setImageFile(null);
     setImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   }
 
   async function uploadImageIfNeeded() {
@@ -197,13 +204,21 @@ export default function AdminDashboard() {
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] || null;
-    setImageFile(file);
-    if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-    } else {
-      setImagePreview(form.imageUrl);
+
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
     }
+
+    if (!file) {
+      setImageFile(null);
+      setImagePreview(form.imageUrl);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImageFile(file);
+    setImagePreview(previewUrl);
+    e.target.value = '';
   }
 
   const hasImage = !!imagePreview || !!form.imageUrl;
@@ -359,6 +374,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1">
                     <input
+                      ref={fileInputRef}
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
@@ -371,7 +387,7 @@ export default function AdminDashboard() {
                     )}
                     {!imageFile && form.imageUrl && (
                       <p className="mt-1 truncate text-[11px] text-neutral-500">
-                        {form.imageUrl.split('/').pop()}
+                        Current image: {form.imageUrl.split('/').pop()}
                       </p>
                     )}
                   </div>

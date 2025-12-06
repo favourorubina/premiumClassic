@@ -31,8 +31,8 @@ export default function AboutPage() {
                 people coming back.
               </p>
               <p className="mt-2">
-                Over time, the menu grew — banana breads, fluffy pancakes, fully loaded meat
-                pies, sausage rolls, juicy shawarma and yoghurt drinks — but the goal stayed
+                Over time, the menu grew into banana breads, fluffy pancakes, fully loaded meat
+                pies, sausage rolls, juicy shawarma and yoghurt drinks. But the goal stayed
                 the same: give you reliable, tasty treats that make your day softer, your
                 gatherings sweeter and your gifts more thoughtful.
               </p>
@@ -77,7 +77,7 @@ export default function AboutPage() {
               <p className="mt-2">
                 Premium Classic works beautifully for birthdays, office meetings, surprise
                 drops, dessert tables and quiet stay-at-home weekends. You can build a custom
-                dessert box with parfaits, banana bread, pastries and shawarma in one order—
+                dessert box with parfaits, banana bread, pastries and shawarma in one order
                 or keep it simple with your favourite item in multiples.
               </p>
               <p className="mt-2">
@@ -104,12 +104,11 @@ export default function AboutPage() {
                 </li>
                 <li>
                   <span className="font-semibold text-neutral-900">2. Send us a message:</span>{' '}
-                  Share what you want to order on WhatsApp — flavours, quantity, date and
-                  pickup/delivery details.
+                  Share what you want to order on WhatsApp.
                 </li>
                 <li>
                   <span className="font-semibold text-neutral-900">3. Confirm &amp; enjoy:</span>{' '}
-                  We&apos;ll confirm availability, send final pricing, and agree on time for
+                  We will confirm availability, send final pricing, and agree on time for
                   pickup or delivery.
                 </li>
               </ol>
@@ -134,7 +133,7 @@ export default function AboutPage() {
                 movie nights.
               </p>
               <p className="mt-3 text-xs text-neutral-500">
-                Need help deciding portions? Send us your budget and number of people — we&apos;ll
+                Need help deciding portions? Send us your budget and number of people and we will
                 suggest combinations that make sense.
               </p>
             </div>
@@ -198,7 +197,7 @@ export default function AboutPage() {
               <p className="mt-2">
                 We pay attention to texture, flavour and presentation so that the
                 &quot;Premium Classic&quot; you had last month tastes just as good the next
-                time you order it — or even better.
+                time you order it or even better.
               </p>
               <p className="mt-2">
                 If you&apos;re not sure what to pick, start with a cake parfait and a slice
