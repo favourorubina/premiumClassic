@@ -85,7 +85,7 @@ export default async function MenuPage() {
                           {hasPrices && (
                             <p className="mt-2 text-xs font-medium text-neutral-800">
                               {item.pricesJson
-                                .map(p => `${p.label}: #${p.amount}`)
+                                .map(p => `${p.label}: ₦${p.amount}`)
                                 .join(' · ')}
                             </p>
                           )}

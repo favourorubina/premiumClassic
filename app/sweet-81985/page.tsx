@@ -1,4 +1,3 @@
-// app/sweet-81985/page.tsx
 'use client';
 
 import Image from 'next/image';
@@ -20,15 +19,13 @@ type MenuItem = {
 };
 
 const BASE_CATEGORIES = [
-  'Cake Parfait',
-  'Cake Slice',
   'Parfait',
-  'Banana Bread (Medium size)',
-  'Mini Banana Bread',
-  'Pancake (Fluffy)',
+  'Banana Bread',
+  'Pancake',
   'Pastries',
   'Shawarma',
-  'Drink',
+  'Cake Slice',
+  'Drinks',
 ];
 
 const emptyForm = {
@@ -82,7 +79,8 @@ export default function AdminDashboard() {
       .map(p => p.trim())
       .filter(Boolean)
       .map(part => {
-        const [label, amountStr] = part.split(':').map(x => x.trim());
+        const [rawLabel, amountStr] = part.split(':').map(x => x.trim());
+        const label = toTitleCase(rawLabel || '');
         return {
           label,
           amount: Number(amountStr) || 0,
@@ -97,7 +95,9 @@ export default function AdminDashboard() {
       category: item.category,
       imageUrl: item.imageUrl,
       description: item.description || '',
-      pricesText: item.pricesJson.map(p => `${p.label}:${p.amount}`).join(', '),
+      pricesText: item.pricesJson
+        .map(p => `${toTitleCase(p.label)}:${p.amount}`)
+        .join(', '),
     });
     setImageFile(null);
     setImagePreview(item.imageUrl);
@@ -239,17 +239,17 @@ export default function AdminDashboard() {
                 Premium Classic
               </p>
               <h1 className="text-sm font-semibold text-neutral-900 sm:text-base">
-                Admin Menu Manager
+                Admin Manager
               </h1>
-              <p className="text-[11px] text-neutral-500">
-                Manage pastries, categories, images and prices.
+              <p className="hidden text-[11px] text-neutral-500 sm:block">
+                Manage items, categories, images and prices in one place.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.open('/', '_blank')}
-              className="hidden rounded-full border border-neutral-300 bg-white px-3 py-1 text-[11px] font-medium text-neutral-700 shadow-sm hover:bg-neutral-100 sm:inline-flex"
+              className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-[11px] font-medium text-neutral-700 shadow-sm hover:bg-neutral-100 sm:inline-flex"
             >
               View site
             </button>
@@ -293,7 +293,8 @@ export default function AdminDashboard() {
                   {form.id ? 'Edit menu item' : 'Add new menu item'}
                 </h2>
                 <p className="mt-1 text-xs text-neutral-500">
-                  Give each pastry a clear name, category, image and price options.
+                  Use categories like Parfait, Banana Bread, Pancake, Pastries, Shawarma, Cake
+                  Slice or Drinks.
                 </p>
               </div>
               {form.id && (
@@ -545,7 +546,7 @@ export default function AdminDashboard() {
                     key={price.label}
                     className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800"
                   >
-                    {price.label}: #{price.amount}
+                    {toTitleCase(price.label)}: ₦{price.amount}
                   </span>
                 ))}
               </div>

@@ -31,12 +31,22 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function PhoneIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path d="M7.1 2.5A2 2 0 0 0 5 4.6v14.8a2 2 0 0 0 2.1 2.1h9.8a2 2 0 0 0 2.1-2.1V4.6A2 2 0 0 0 16.9 2.5H7.1Zm0 1.5h9.8a.5.5 0 0 1 .5.5v11.4H6.6V4.5a.5.5 0 0 1 .5-.5Zm4.9 14.4a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Z" />
+    </svg>
+  );
+}
+
 export function SiteShell({ children }: SiteShellProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const whatsappLink = 'https://wa.me/2340000000000';
-  const instagramLink = 'https://instagram.com';
+  // Real contact links
+  const phoneHref = 'tel:+2347072475343';
+  const whatsappLink = 'https://wa.me/2348089464118';
+  const instagramLink = 'https://www.instagram.com/premium81985';
 
   const navItems = [
     { href: '/', label: 'Home' },
@@ -57,7 +67,7 @@ export function SiteShell({ children }: SiteShellProps) {
                 className="h-7 w-7 object-contain"
               />
             </div>
-            <div className="hidden sm:block">
+            <div className="sm:block">
               <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-700">
                 Premium Classic
               </p>
@@ -90,13 +100,27 @@ export function SiteShell({ children }: SiteShellProps) {
             <a
               href={instagramLink}
               target="_blank"
+              rel="noreferrer"
+              title="Instagram"
+              aria-label="Instagram"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 hover:border-amber-400 hover:text-amber-700"
             >
               <InstagramIcon className="h-4 w-4 fill-none stroke-current stroke-[1.3]" />
             </a>
             <a
+              href={phoneHref}
+              title="Call Premium Classic"
+              aria-label="Call Premium Classic"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 hover:border-amber-400 hover:text-amber-700"
+            >
+              <PhoneIcon className="h-4 w-4 fill-current" />
+            </a>
+            <a
               href={whatsappLink}
               target="_blank"
+              rel="noreferrer"
+              title="WhatsApp"
+              aria-label="WhatsApp"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-400"
             >
               <WhatsAppIcon className="h-4 w-4 fill-current" />
@@ -137,18 +161,33 @@ export function SiteShell({ children }: SiteShellProps) {
                 );
               })}
             </nav>
+
             <div className="mt-3 flex items-center gap-3">
               <a
-                href="https://instagram.com"
+                href={phoneHref}
+                title="Call Premium Classic"
+                aria-label="Call Premium Classic"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-100"
+              >
+                <PhoneIcon className="h-4 w-4 fill-current" />
+              </a>
+              <a
+                href={instagramLink}
                 target="_blank"
+                rel="noreferrer"
+                title="Instagram"
+                aria-label="Instagram"
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-800 hover:bg-neutral-100"
               >
                 <InstagramIcon className="h-4 w-4 fill-none stroke-current stroke-[1.3]" />
                 <span>@premiumclassic</span>
               </a>
               <a
-                href="https://wa.me/2340000000000"
+                href={whatsappLink}
                 target="_blank"
+                rel="noreferrer"
+                title="WhatsApp"
+                aria-label="WhatsApp"
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-400"
               >
                 <WhatsAppIcon className="h-4 w-4 fill-current" />
@@ -162,14 +201,36 @@ export function SiteShell({ children }: SiteShellProps) {
 
       <footer className="border-t border-neutral-200 bg-white/80">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 text-[11px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <p>© {new Date().getFullYear()} Premium Classic Pastries. All rights reserved.</p>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-neutral-500">
-              Orders & enquiries:{' '}
-              <a href="https://wa.me/2340000000000" target="_blank" className="font-medium text-emerald-600">
-                WhatsApp
-              </a>
-            </span>
+          <p>© {new Date().getFullYear()} Premium Classic Pastries.</p>
+          <div className="flex items-center gap-3">
+            <a
+              href={instagramLink}
+              target="_blank"
+              rel="noreferrer"
+              title="Instagram"
+              aria-label="Instagram"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 hover:border-amber-400 hover:text-amber-700"
+            >
+              <InstagramIcon className="h-4 w-4 fill-none stroke-current stroke-[1.3]" />
+            </a>
+            <a
+              href={phoneHref}
+              title="Call Premium Classic"
+              aria-label="Call Premium Classic"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 hover:border-amber-400 hover:text-amber-700"
+            >
+              <PhoneIcon className="h-4 w-4 fill-current" />
+            </a>
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noreferrer"
+              title="WhatsApp"
+              aria-label="WhatsApp"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-400"
+            >
+              <WhatsAppIcon className="h-4 w-4 fill-current" />
+            </a>
           </div>
         </div>
       </footer>
