@@ -216,9 +216,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     });
 
     lines.push('');
-    lines.push(
-      `Total: ₦${cartTotal.toLocaleString('en-NG')}`,
-    );
+    lines.push(`Total: ₦${cartTotal.toLocaleString('en-NG')}`);
     lines.push('');
     lines.push('My details:');
     lines.push(`- Name: ${customerName.trim()}`);
@@ -230,8 +228,13 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     )}`;
 
     window.open(url, '_blank');
+
     setSubmitting(false);
     setCheckoutOpen(false);
+    setCartItems([]);
+    setCustomerName('');
+    setCustomerPhone('');
+    setFormError('');
   }
 
   function handleQuantityChange(value: string) {
