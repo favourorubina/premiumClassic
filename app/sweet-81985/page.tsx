@@ -300,8 +300,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)]">
-          <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] lg:items-start">
+          <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 lg:sticky lg:top-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-neutral-900">
