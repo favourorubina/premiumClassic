@@ -23,7 +23,7 @@ type Props = {
   fallbackImage: string;
 };
 
-const WHATSAPP_NUMBER = '2340000000000';
+const WHATSAPP_NUMBER = '2348089464118';
 
 function isValidName(name: string) {
   const trimmed = name.trim();
@@ -31,10 +31,6 @@ function isValidName(name: string) {
   const parts = trimmed.split(/\s+/);
   if (parts.length < 2) return false;
   return parts[0].length >= 2 && parts[1].length >= 2;
-}
-
-function isValidEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
 function isValidNigerianPhone(phone: string) {
@@ -47,7 +43,6 @@ function isValidNigerianPhone(phone: string) {
 export default function MenuClient({ items, fallbackImage }: Props) {
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
   const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [selectedVariant, setSelectedVariant] = useState('');
   const [formError, setFormError] = useState('');
@@ -92,11 +87,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
       return;
     }
 
-    if (!isValidEmail(customerEmail)) {
-      setFormError('Please enter a valid email address.');
-      return;
-    }
-
     if (!isValidNigerianPhone(customerPhone)) {
       setFormError('Please enter a valid Nigerian phone number.');
       return;
@@ -124,18 +114,19 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
     setSubmitting(true);
 
-    const variantPart = hasMultiple ? ` - ${chosenOption.label}` : '';
+    const itemName = toTitleCase(activeItem.name.trim());
+    const optionLabel = toTitleCase(chosenOption.label.trim());
+    const variantPart = hasMultiple ? ` - ${optionLabel}` : '';
     const pricePart = ` (₦${chosenOption.amount.toLocaleString('en-NG')})`;
 
     const messageLines = [
       'Hello Premium Classic,',
       '',
-      'I would like to place an order:',
-      `- Item: ${activeItem.name}${variantPart}${pricePart}`,
+      'I would like to place an order for:',
+      `- ${itemName}${variantPart}${pricePart}`,
       '',
       'My details:',
       `- Name: ${customerName.trim()}`,
-      `- Email: ${customerEmail.trim()}`,
       `- Phone: ${customerPhone.trim()}`,
     ];
 
@@ -158,10 +149,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
               <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">
                 {toTitleCase(category)}
               </h2>
-              <p className="text-xs text-neutral-500">
-                {groupedByCategory[category].length}{' '}
-                {groupedByCategory[category].length === 1 ? 'item' : 'items'}
-              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {groupedByCategory[category].map(item => {
@@ -248,7 +235,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
             <form onSubmit={handleSubmitOrder} className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
-                <div>
+                <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs font-medium text-neutral-700">
                     Full name
                   </label>
@@ -256,18 +243,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
                     placeholder="First and last name"
-                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-neutral-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={customerEmail}
-                    onChange={e => setCustomerEmail(e.target.value)}
-                    placeholder="you@example.com"
                     className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                   />
                 </div>

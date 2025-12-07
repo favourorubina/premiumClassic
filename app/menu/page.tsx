@@ -42,7 +42,7 @@ export default async function MenuPage() {
               treats.
             </p>
             <a
-              href="https://wa.me/2340000000000"
+              href="https://wa.me/2348089464118"
               target="_blank"
               className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-400"
             >
