@@ -1,5 +1,5 @@
 import { getGroupedMenu } from '@/lib/menu';
-import { toTitleCase } from '@/lib/text';
+import MenuClient from './MenuClient';
 
 const fallbackImage =
   'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=900&q=80';
@@ -7,6 +7,13 @@ const fallbackImage =
 export default async function MenuPage() {
   const groups = await getGroupedMenu();
   const hasItems = Object.keys(groups).length > 0;
+
+  const flatItems = Object.entries(groups).flatMap(([category, items]) =>
+    items.map(item => ({
+      ...item,
+      category,
+    })),
+  );
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
@@ -46,57 +53,10 @@ export default async function MenuPage() {
         )}
 
         {hasItems && (
-          <div className="mt-8 space-y-8 sm:mt-10">
-            {Object.entries(groups).map(([category, items]) => (
-              <section key={category} className="space-y-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">
-                    {toTitleCase(category)}
-                  </h2>
-                  <p className="text-xs text-neutral-500">
-                    {items.length} {items.length === 1 ? 'item' : 'items'}
-                  </p>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {items.map(item => {
-                    const image = item.imageUrl || fallbackImage;
-                    const hasPrices = item.pricesJson && item.pricesJson.length > 0;
-                    return (
-                      <article
-                        key={item.id}
-                        className="flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white/90 shadow-sm"
-                      >
-                        <div className="h-32 w-full overflow-hidden bg-neutral-100 sm:h-36">
-                          <img
-                            src={image}
-                            alt={item.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="flex flex-1 flex-col p-3">
-                          <h3 className="text-sm font-semibold text-neutral-900">
-                            {toTitleCase(item.name)}
-                          </h3>
-                          {item.description && (
-                            <p className="mt-1 text-xs text-neutral-600">
-                              {item.description}
-                            </p>
-                          )}
-                          {hasPrices && (
-                            <p className="mt-2 text-xs font-medium text-neutral-800">
-                              {item.pricesJson
-                                .map(p => `${p.label}: ₦${p.amount}`)
-                                .join(' · ')}
-                            </p>
-                          )}
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
+          <MenuClient
+            items={flatItems}
+            fallbackImage={fallbackImage}
+          />
         )}
       </div>
     </div>
