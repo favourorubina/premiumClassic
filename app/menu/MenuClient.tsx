@@ -32,6 +32,8 @@ type CartItem = {
   quantity: number;
 };
 
+type Preview = { src: string; alt: string } | null;
+
 const WHATSAPP_NUMBER = '2348089464118';
 
 function isValidName(name: string) {
@@ -49,6 +51,7 @@ function isValidNigerianPhone(phone: string) {
   return false;
 }
 
+/* ✅ ONLY PREVIEW UPDATED (ImagePreview + ImageViewModal) */
 function ImagePreview({
   src,
   alt,
@@ -62,7 +65,7 @@ function ImagePreview({
     <button
       type="button"
       onClick={onOpen}
-      className="relative h-32 w-full overflow-hidden bg-black/40 sm:h-36"
+      className="group relative h-32 w-full overflow-hidden bg-neutral-100 sm:h-36"
       aria-label="Open image preview"
     >
       <Image
@@ -72,8 +75,8 @@ function ImagePreview({
         className="object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-105"
         sizes="(max-width: 640px) 100vw, 33vw"
       />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100" />
-      <div className="pointer-events-none absolute bottom-2 right-2 rounded-full border border-amber-500/30 bg-black/70 px-3 py-1 text-[11px] font-semibold text-amber-100/90 opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100" />
+      <div className="pointer-events-none absolute bottom-2 right-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1 text-[11px] font-semibold text-neutral-800 opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100">
         View
       </div>
     </button>
@@ -124,24 +127,24 @@ function ImageViewModal({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/85"
+        className="absolute inset-0 bg-black/70"
         onClick={onClose}
         aria-label="Close modal"
       />
 
-      <div className="relative z-10 w-[min(100%,56rem)] max-h-[calc(100vh-2rem)] overflow-hidden rounded-3xl border border-amber-500/25 bg-neutral-950/90 shadow-2xl backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-amber-500/15 px-4 py-3">
-          <p className="text-sm font-semibold text-amber-50">Preview</p>
+      <div className="relative z-10 w-[min(100%,56rem)] max-h-[calc(100vh-2rem)] overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3">
+          <p className="text-sm font-semibold text-neutral-900">Preview</p>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-amber-500/25 bg-black/60 px-3 py-1 text-xs font-semibold text-amber-100 hover:border-amber-400/40 hover:text-amber-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           >
             Close
           </button>
         </div>
 
-        <div className="min-h-0 overflow-auto bg-black/40">
+        <div className="min-h-0 overflow-auto bg-neutral-50">
           <div className="relative h-[min(70vh,34rem)] w-full">
             <Image
               src={src}
@@ -153,8 +156,8 @@ function ImageViewModal({
           </div>
         </div>
 
-        <div className="border-t border-amber-500/10 px-4 py-3 text-xs text-amber-100/70">
-          Press <span className="font-semibold text-amber-50">Esc</span> to close
+        <div className="border-t border-neutral-200 px-4 py-3 text-xs text-neutral-600">
+          Press <span className="font-semibold text-neutral-900">Esc</span> to close
         </div>
       </div>
     </div>
@@ -456,18 +459,19 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
       {cartItems.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4 sm:pb-6">
-          <div className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-full bg-neutral-950 px-4 py-2.5 text-xs text-amber-50 shadow-lg ring-1 ring-amber-500/15">
+          <div className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-xs text-neutral-900 shadow-lg">
             <div className="flex flex-col">
               <span className="font-semibold">
                 {cartItems.length} item{cartItems.length > 1 ? 's' : ''} in order
               </span>
-              <span className="text-[11px] text-amber-100/70">
+              <span className="text-[11px] text-neutral-600">
                 Total: ₦{cartTotal.toLocaleString('en-NG')}
               </span>
             </div>
+
             <button
               onClick={openCheckout}
-              className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-400"
+              className="rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
             >
               Review order &amp; send
             </button>
@@ -477,25 +481,23 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
       {activeItem && (
         <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 px-4">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-amber-500/20 bg-neutral-950/90 shadow-2xl backdrop-blur-sm">
-            <div className="flex items-start justify-between gap-2 border-b border-amber-500/15 px-4 py-4">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-2 border-b border-neutral-200 px-4 py-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
                   {toTitleCase(activeItem.category)}
                 </p>
-                <h2 className="mt-1 text-base font-semibold text-amber-50 sm:text-lg">
+                <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
                   {toTitleCase(activeItem.name)}
                 </h2>
                 {activeItem.description && (
-                  <p className="mt-1 text-[11px] text-amber-100/70">
-                    {activeItem.description}
-                  </p>
+                  <p className="mt-1 text-[11px] text-neutral-600">{activeItem.description}</p>
                 )}
               </div>
 
               <button
                 onClick={closeItemModal}
-                className="rounded-full border border-amber-500/25 bg-black/60 px-3 py-1 text-[11px] font-semibold text-amber-100 hover:border-amber-400/40 hover:text-amber-50"
+                className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
               >
                 Close
               </button>
@@ -504,13 +506,13 @@ export default function MenuClient({ items, fallbackImage }: Props) {
             <form onSubmit={handleAddToCart} className="space-y-3 px-4 py-4">
               {activeItem.pricesJson && activeItem.pricesJson.length > 1 && (
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-amber-100/80">
+                  <label className="mb-1 block text-xs font-medium text-neutral-700">
                     Size / option
                   </label>
                   <select
                     value={selectedVariant}
                     onChange={e => setSelectedVariant(e.target.value)}
-                    className="w-full rounded-xl border border-amber-500/20 bg-black/50 px-3 py-2 text-sm text-amber-50 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
                   >
                     <option value="">Select an option</option>
                     {activeItem.pricesJson.map(option => (
@@ -519,29 +521,27 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1 text-[11px] text-amber-100/60">
+                  <p className="mt-1 text-[11px] text-neutral-500">
                     For example: Full cup, Medium, 3 pieces, 8 pieces.
                   </p>
                 </div>
               )}
 
               {activeItem.pricesJson && activeItem.pricesJson.length === 1 && (
-                <p className="text-[11px] text-amber-100/70">
+                <p className="text-[11px] text-neutral-600">
                   Price: ₦{activeItem.pricesJson[0].amount.toLocaleString('en-NG')} (no size
                   selection needed).
                 </p>
               )}
 
               <div>
-                <label className="mb-1 block text-xs font-medium text-amber-100/80">
-                  Quantity
-                </label>
+                <label className="mb-1 block text-xs font-medium text-neutral-700">Quantity</label>
 
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={decModalQty}
-                    className="h-10 w-10 rounded-xl border border-amber-500/20 bg-black/50 text-sm font-semibold text-amber-50 hover:border-amber-400/30 hover:bg-black/60"
+                    className="h-10 w-10 rounded-xl border border-neutral-200 bg-white text-sm font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                     aria-label="Decrease quantity"
                   >
                     −
@@ -552,14 +552,14 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                     inputMode="numeric"
                     value={quantity}
                     onChange={e => handleQuantityChange(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-amber-500/20 bg-black/40 px-3 text-center text-sm text-amber-50 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    className="h-10 w-full rounded-xl border border-neutral-200 bg-white px-3 text-center text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
                     aria-label="Quantity"
                   />
 
                   <button
                     type="button"
                     onClick={incModalQty}
-                    className="h-10 w-10 rounded-xl border border-amber-500/20 bg-black/50 text-sm font-semibold text-amber-50 hover:border-amber-400/30 hover:bg-black/60"
+                    className="h-10 w-10 rounded-xl border border-neutral-200 bg-white text-sm font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                     aria-label="Increase quantity"
                   >
                     +
@@ -568,14 +568,14 @@ export default function MenuClient({ items, fallbackImage }: Props) {
               </div>
 
               {itemError && (
-                <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] text-red-200">
+                <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
                   {itemError}
                 </p>
               )}
 
               <button
                 type="submit"
-                className="mt-1 w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-amber-400"
+                className="mt-1 w-full rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
               >
                 Add to order
               </button>
@@ -586,26 +586,27 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
       {checkoutOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-amber-500/20 bg-neutral-950/90 shadow-2xl backdrop-blur-sm">
-            <div className="flex items-start justify-between gap-2 border-b border-amber-500/15 px-4 py-4">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-2 border-b border-neutral-200 px-4 py-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
                   Order summary
                 </p>
-                <h2 className="mt-1 text-base font-semibold text-amber-50 sm:text-lg">
+                <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
                   Review and send on WhatsApp
                 </h2>
               </div>
+
               <button
                 onClick={closeCheckout}
-                className="rounded-full border border-amber-500/25 bg-black/60 px-3 py-1 text-[11px] font-semibold text-amber-100 hover:border-amber-400/40 hover:text-amber-50"
+                className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
               >
                 Close
               </button>
             </div>
 
             <div className="px-4 py-4">
-              <div className="mb-3 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-amber-500/10 bg-black/40 p-3 text-[11px] text-amber-100/80">
+              <div className="mb-3 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-neutral-200 bg-neutral-50 p-3 text-[11px] text-neutral-700">
                 {cartItems.map((item, index) => {
                   const name = toTitleCase(item.name);
                   const variant = item.variantLabel ? ` • ${toTitleCase(item.variantLabel)}` : '';
@@ -614,11 +615,11 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                   return (
                     <div key={index} className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate font-medium text-amber-50">
+                        <p className="truncate font-medium text-neutral-900">
                           {name}
                           {variant}
                         </p>
-                        <p className="text-[10px] text-amber-100/60">
+                        <p className="text-[10px] text-neutral-600">
                           ₦{item.unitAmount.toLocaleString('en-NG')} each
                         </p>
 
@@ -626,18 +627,20 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                           <button
                             type="button"
                             onClick={() => decCartQty(index)}
-                            className="h-7 w-7 rounded-full border border-amber-500/20 bg-black/50 text-[12px] font-semibold text-amber-50 hover:border-amber-400/30 hover:bg-black/60"
+                            className="h-7 w-7 rounded-full border border-neutral-200 bg-white text-[12px] font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                             aria-label="Decrease quantity"
                           >
                             −
                           </button>
-                          <span className="min-w-[24px] text-center text-[11px] font-semibold text-amber-50">
+
+                          <span className="min-w-[24px] text-center text-[11px] font-semibold text-neutral-900">
                             {item.quantity}
                           </span>
+
                           <button
                             type="button"
                             onClick={() => incCartQty(index)}
-                            className="h-7 w-7 rounded-full border border-amber-500/20 bg-black/50 text-[12px] font-semibold text-amber-50 hover:border-amber-400/30 hover:bg-black/60"
+                            className="h-7 w-7 rounded-full border border-neutral-200 bg-white text-[12px] font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                             aria-label="Increase quantity"
                           >
                             +
@@ -646,7 +649,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                           <button
                             type="button"
                             onClick={() => handleRemoveFromCart(index)}
-                            className="ml-2 text-[10px] font-semibold text-red-300 hover:underline"
+                            className="ml-2 text-[10px] font-semibold text-red-600 hover:underline"
                           >
                             Remove
                           </button>
@@ -654,7 +657,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                       </div>
 
                       <div className="flex flex-col items-end">
-                        <span className="text-[11px] font-semibold text-amber-50">
+                        <span className="text-[11px] font-semibold text-neutral-900">
                           ₦{subtotal.toLocaleString('en-NG')}
                         </span>
                       </div>
@@ -662,8 +665,8 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                   );
                 })}
 
-                <div className="mt-1 border-t border-dashed border-amber-500/15 pt-2">
-                  <p className="text-[11px] font-semibold text-amber-50">
+                <div className="mt-1 border-t border-dashed border-neutral-200 pt-2">
+                  <p className="text-[11px] font-semibold text-neutral-900">
                     Total: ₦{cartTotal.toLocaleString('en-NG')}
                   </p>
                 </div>
@@ -671,31 +674,31 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
               <form onSubmit={handleSendOrder} className="space-y-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-amber-100/80">
+                  <label className="mb-1 block text-xs font-medium text-neutral-700">
                     Full name
                   </label>
                   <input
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
                     placeholder="First and last name"
-                    className="w-full rounded-xl border border-amber-500/20 bg-black/40 px-3 py-2 text-sm text-amber-50 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-amber-100/80">
+                  <label className="mb-1 block text-xs font-medium text-neutral-700">
                     Phone (Nigeria)
                   </label>
                   <input
                     value={customerPhone}
                     onChange={e => setCustomerPhone(e.target.value)}
                     placeholder="0803…, 0703… or +234…"
-                    className="w-full rounded-xl border border-amber-500/20 bg-black/40 px-3 py-2 text-sm text-amber-50 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
                   />
                 </div>
 
                 {formError && (
-                  <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] text-red-200">
+                  <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
                     {formError}
                   </p>
                 )}
@@ -703,7 +706,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="mt-1 w-full rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                  className="mt-1 w-full rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
                 >
                   {submitting ? 'Opening WhatsApp…' : 'Send order on WhatsApp'}
                 </button>
