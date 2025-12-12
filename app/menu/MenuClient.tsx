@@ -32,9 +32,9 @@ type CartItem = {
   quantity: number;
 };
 
-type Preview = { src: string; alt: string } | null;
-
 const WHATSAPP_NUMBER = '2348089464118';
+
+const STORAGE_KEY = 'premiumClassic.menuCart.v1';
 
 function isValidName(name: string) {
   const trimmed = name.trim();
@@ -51,7 +51,6 @@ function isValidNigerianPhone(phone: string) {
   return false;
 }
 
-/* ✅ ONLY PREVIEW UPDATED (ImagePreview + ImageViewModal) */
 function ImagePreview({
   src,
   alt,
@@ -178,6 +177,34 @@ export default function MenuClient({ items, fallbackImage }: Props) {
   const [customerPhone, setCustomerPhone] = useState('');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        cartItems?: CartItem[];
+        customerName?: string;
+        customerPhone?: string;
+      };
+      if (Array.isArray(parsed.cartItems)) setCartItems(parsed.cartItems);
+      if (typeof parsed.customerName === 'string') setCustomerName(parsed.customerName);
+      if (typeof parsed.customerPhone === 'string') setCustomerPhone(parsed.customerPhone);
+    } catch {
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ cartItems, customerName, customerPhone }),
+      );
+    } catch {
+      return;
+    }
+  }, [cartItems, customerName, customerPhone]);
 
   const groupedByCategory = useMemo(
     () =>
@@ -323,6 +350,14 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     });
   }
 
+  function clearStoredCart() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      return;
+    }
+  }
+
   function handleSendOrder(e: React.FormEvent) {
     e.preventDefault();
 
@@ -379,6 +414,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     setCustomerName('');
     setCustomerPhone('');
     setFormError('');
+    clearStoredCart();
   }
 
   return (
