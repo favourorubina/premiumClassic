@@ -142,26 +142,26 @@ export default function AboutPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-700">
                 Reach Premium Classic
               </p>
+
               <div className="mt-3 space-y-2 text-sm text-neutral-700">
                 <p>
                   <span className="font-semibold text-neutral-900">Call:</span>{' '}
-                  <a
-                    href="tel:+2347072475343"
-                    className="text-amber-700 hover:text-amber-800"
-                  >
+                  <a href="tel:+2347072475343" className="text-amber-700 hover:text-amber-800">
                     070 7247 5343
                   </a>
                 </p>
+
                 <p>
                   <span className="font-semibold text-neutral-900">WhatsApp:</span>{' '}
                   <a
                     href="https://wa.me/2348089464118"
                     target="_blank"
-                    className="text-emerald-600 hover:text-emerald-500"
+                    className="text-amber-700 hover:text-amber-800"
                   >
                     0808 946 4118
                   </a>
                 </p>
+
                 <p>
                   <span className="font-semibold text-neutral-900">Instagram:</span>{' '}
                   <a
@@ -173,6 +173,7 @@ export default function AboutPage() {
                   </a>
                 </p>
               </div>
+
               <div className="mt-4 flex flex-wrap gap-2 text-xs">
                 <Link
                   href="/menu"
@@ -180,10 +181,11 @@ export default function AboutPage() {
                 >
                   View full menu
                 </Link>
+
                 <a
                   href="https://wa.me/2348089464118"
                   target="_blank"
-                  className="inline-flex flex-1 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 px-4 py-2 font-medium text-white hover:bg-emerald-400 sm:flex-none sm:px-5"
+                  className="inline-flex flex-1 items-center justify-center rounded-full border border-amber-200 bg-amber-500 px-4 py-2 font-medium text-black hover:bg-amber-400 sm:flex-none sm:px-5"
                 >
                   Order on WhatsApp
                 </a>

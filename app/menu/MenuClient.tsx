@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toTitleCase } from '@/lib/text';
 
 type PriceOption = {
@@ -49,7 +49,121 @@ function isValidNigerianPhone(phone: string) {
   return false;
 }
 
+function ImagePreview({
+  src,
+  alt,
+  onOpen,
+}: {
+  src: string;
+  alt: string;
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="relative h-32 w-full overflow-hidden bg-black/40 sm:h-36"
+      aria-label="Open image preview"
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className="object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-105"
+        sizes="(max-width: 640px) 100vw, 33vw"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100" />
+      <div className="pointer-events-none absolute bottom-2 right-2 rounded-full border border-amber-500/30 bg-black/70 px-3 py-1 text-[11px] font-semibold text-amber-100/90 opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100">
+        View
+      </div>
+    </button>
+  );
+}
+
+function ImageViewModal({
+  open,
+  src,
+  alt,
+  onClose,
+}: {
+  open: boolean;
+  src: string;
+  alt: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    const prevOverflow = document.body.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = 'hidden';
+    if (scrollBarWidth > 0) document.body.style.paddingRight = `${scrollBarWidth}px`;
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] grid place-items-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image preview"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/85"
+        onClick={onClose}
+        aria-label="Close modal"
+      />
+
+      <div className="relative z-10 w-[min(100%,56rem)] max-h-[calc(100vh-2rem)] overflow-hidden rounded-3xl border border-amber-500/25 bg-neutral-950/90 shadow-2xl backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-3 border-b border-amber-500/15 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-50">Preview</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-amber-500/25 bg-black/60 px-3 py-1 text-xs font-semibold text-amber-100 hover:border-amber-400/40 hover:text-amber-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="min-h-0 overflow-auto bg-black/40">
+          <div className="relative h-[min(70vh,34rem)] w-full">
+            <Image
+              src={src}
+              alt={alt}
+              fill
+              className="object-contain"
+              sizes="(max-width: 896px) 100vw, 56rem"
+            />
+          </div>
+        </div>
+
+        <div className="border-t border-amber-500/10 px-4 py-3 text-xs text-amber-100/70">
+          Press <span className="font-semibold text-amber-50">Esc</span> to close
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MenuClient({ items, fallbackImage }: Props) {
+  const [preview, setPreview] = useState<{ src: string; alt: string } | null>(null);
+
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
   const [selectedVariant, setSelectedVariant] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -79,11 +193,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
   );
 
   const cartTotal = useMemo(
-    () =>
-      cartItems.reduce(
-        (sum, item) => sum + item.unitAmount * item.quantity,
-        0,
-      ),
+    () => cartItems.reduce((sum, item) => sum + item.unitAmount * item.quantity, 0),
     [cartItems],
   );
 
@@ -99,6 +209,20 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     setItemError('');
     setSelectedVariant('');
     setQuantity(1);
+  }
+
+  function decModalQty() {
+    setQuantity(q => Math.max(1, q - 1));
+  }
+
+  function incModalQty() {
+    setQuantity(q => q + 1);
+  }
+
+  function handleQuantityChange(value: string) {
+    const num = Number(value.replace(/\D/g, ''));
+    if (!num || num < 1) setQuantity(1);
+    else setQuantity(num);
   }
 
   function handleAddToCart(e: React.FormEvent) {
@@ -125,19 +249,12 @@ export default function MenuClient({ items, fallbackImage }: Props) {
       return;
     }
 
-    if (!quantity || quantity < 1) {
-      setItemError('Please enter a valid quantity (1 or more).');
-      return;
-    }
-
     const name = activeItem.name.trim();
     const variantLabel = chosenOption.label ? chosenOption.label.trim() : null;
 
     setCartItems(prev => {
       const existingIndex = prev.findIndex(
-        ci =>
-          ci.id === activeItem.id &&
-          (ci.variantLabel || '') === (variantLabel || ''),
+        ci => ci.id === activeItem.id && (ci.variantLabel || '') === (variantLabel || ''),
       );
 
       if (existingIndex >= 0) {
@@ -177,8 +294,35 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     setSubmitting(false);
   }
 
+  function handleRemoveFromCart(index: number) {
+    setCartItems(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function incCartQty(index: number) {
+    setCartItems(prev => {
+      const copy = [...prev];
+      const item = copy[index];
+      if (!item) return prev;
+      copy[index] = { ...item, quantity: item.quantity + 1 };
+      return copy;
+    });
+  }
+
+  function decCartQty(index: number) {
+    setCartItems(prev => {
+      const copy = [...prev];
+      const item = copy[index];
+      if (!item) return prev;
+      const nextQty = item.quantity - 1;
+      if (nextQty <= 0) return copy.filter((_, i) => i !== index);
+      copy[index] = { ...item, quantity: nextQty };
+      return copy;
+    });
+  }
+
   function handleSendOrder(e: React.FormEvent) {
     e.preventDefault();
+
     if (cartItems.length === 0) {
       setFormError('Your order is empty. Please add at least one item.');
       return;
@@ -197,7 +341,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     setSubmitting(true);
 
     const lines: string[] = [];
-
     lines.push('Hello Premium Classic,');
     lines.push('');
     lines.push('I would like to place an order:');
@@ -223,9 +366,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     lines.push(`- Phone: ${customerPhone.trim()}`);
 
     const message = lines.join('\n');
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-      message,
-    )}`;
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
     window.open(url, '_blank');
 
@@ -237,65 +378,58 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     setFormError('');
   }
 
-  function handleQuantityChange(value: string) {
-    const num = Number(value.replace(/\D/g, ''));
-    if (!num) {
-      setQuantity(1);
-    } else {
-      setQuantity(num);
-    }
-  }
-
-  function handleRemoveFromCart(index: number) {
-    setCartItems(prev => prev.filter((_, i) => i !== index));
-  }
-
   return (
     <>
+      <ImageViewModal
+        open={!!preview}
+        src={preview?.src || fallbackImage}
+        alt={preview?.alt || 'Preview'}
+        onClose={() => setPreview(null)}
+      />
+
       <div className="mt-8 space-y-8 sm:mt-10">
         {categories.map(category => (
           <section key={category} className="space-y-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">
+              <h2 className="text-lg font-semibold text-black sm:text-xl">
                 {toTitleCase(category)}
               </h2>
             </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {groupedByCategory[category].map(item => {
                 const image = item.imageUrl || fallbackImage;
-                const hasPrices =
-                  item.pricesJson && item.pricesJson.length > 0;
+                const hasPrices = item.pricesJson && item.pricesJson.length > 0;
+
                 return (
                   <article
                     key={item.id}
-                    className="flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white/90 shadow-sm"
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-amber-500/15 bg-neutral-950/60 shadow-sm transition hover:-translate-y-[2px] hover:border-amber-400/25 hover:shadow-md"
                   >
-                    <div className="relative h-32 w-full overflow-hidden bg-neutral-100 sm:h-36">
-                      <Image
-                        src={image}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+                    <ImagePreview
+                      src={image}
+                      alt={item.name}
+                      onOpen={() => setPreview({ src: image, alt: item.name })}
+                    />
+
                     <div className="flex flex-1 flex-col p-3">
-                      <h3 className="text-sm font-semibold text-neutral-900">
+                      <h3 className="text-sm font-semibold text-amber-50">
                         {toTitleCase(item.name)}
                       </h3>
+
                       {item.description && (
-                        <p className="mt-1 text-xs text-neutral-600">
-                          {item.description}
-                        </p>
+                        <p className="mt-1 text-xs text-amber-100/70">{item.description}</p>
                       )}
+
                       {hasPrices && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {item.pricesJson.map(option => (
                             <span
                               key={option.label}
-                              className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800"
+                              className="inline-flex items-center rounded-full border border-amber-500/20 bg-black/40 px-2.5 py-1 text-[11px] font-medium text-amber-100"
                             >
                               {item.pricesJson.length > 1 && (
-                                <span className="mr-1">
+                                <span className="mr-1 text-amber-200/90">
                                   {toTitleCase(option.label)}:
                                 </span>
                               )}
@@ -304,9 +438,10 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                           ))}
                         </div>
                       )}
+
                       <button
                         onClick={() => openItemModal(item)}
-                        className="mt-3 inline-flex items-center justify-center rounded-full bg-amber-700 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-800"
+                        className="mt-3 inline-flex items-center justify-center rounded-full bg-amber-500 px-3 py-2 text-xs font-semibold text-black hover:bg-amber-400"
                       >
                         Add to order
                       </button>
@@ -321,12 +456,12 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
       {cartItems.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4 sm:pb-6">
-          <div className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-full bg-neutral-900 px-4 py-2.5 text-xs text-white shadow-lg">
+          <div className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-full bg-neutral-950 px-4 py-2.5 text-xs text-amber-50 shadow-lg ring-1 ring-amber-500/15">
             <div className="flex flex-col">
               <span className="font-semibold">
                 {cartItems.length} item{cartItems.length > 1 ? 's' : ''} in order
               </span>
-              <span className="text-[11px] text-neutral-300">
+              <span className="text-[11px] text-amber-100/70">
                 Total: ₦{cartTotal.toLocaleString('en-NG')}
               </span>
             </div>
@@ -341,87 +476,106 @@ export default function MenuClient({ items, fallbackImage }: Props) {
       )}
 
       {activeItem && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl sm:p-5">
-            <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-amber-500/20 bg-neutral-950/90 shadow-2xl backdrop-blur-sm">
+            <div className="flex items-start justify-between gap-2 border-b border-amber-500/15 px-4 py-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
                   {toTitleCase(activeItem.category)}
                 </p>
-                <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
+                <h2 className="mt-1 text-base font-semibold text-amber-50 sm:text-lg">
                   {toTitleCase(activeItem.name)}
                 </h2>
                 {activeItem.description && (
-                  <p className="mt-1 text-[11px] text-neutral-600">
+                  <p className="mt-1 text-[11px] text-amber-100/70">
                     {activeItem.description}
                   </p>
                 )}
               </div>
+
               <button
                 onClick={closeItemModal}
-                className="rounded-full border border-neutral-200 bg-white px-2 py-1 text-[11px] text-neutral-600 hover:bg-neutral-100"
+                className="rounded-full border border-amber-500/25 bg-black/60 px-3 py-1 text-[11px] font-semibold text-amber-100 hover:border-amber-400/40 hover:text-amber-50"
               >
                 Close
               </button>
             </div>
 
-            <form onSubmit={handleAddToCart} className="space-y-3">
-              {activeItem.pricesJson &&
-                activeItem.pricesJson.length > 1 && (
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-neutral-700">
-                      Size / option
-                    </label>
-                    <select
-                      value={selectedVariant}
-                      onChange={e => setSelectedVariant(e.target.value)}
-                      className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                    >
-                      <option value="">Select an option</option>
-                      {activeItem.pricesJson.map(option => (
-                        <option key={option.label} value={option.label}>
-                          {toTitleCase(option.label)} – ₦
-                          {option.amount.toLocaleString('en-NG')}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="mt-1 text-[11px] text-neutral-500">
-                      For example: Full cup, Medium, 3 pieces, 8 pieces.
-                    </p>
-                  </div>
-                )}
-
-              {activeItem.pricesJson &&
-                activeItem.pricesJson.length === 1 && (
-                  <p className="text-[11px] text-neutral-600">
-                    Price: ₦
-                    {activeItem.pricesJson[0].amount.toLocaleString('en-NG')}{' '}
-                    (no size selection needed).
+            <form onSubmit={handleAddToCart} className="space-y-3 px-4 py-4">
+              {activeItem.pricesJson && activeItem.pricesJson.length > 1 && (
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-amber-100/80">
+                    Size / option
+                  </label>
+                  <select
+                    value={selectedVariant}
+                    onChange={e => setSelectedVariant(e.target.value)}
+                    className="w-full rounded-xl border border-amber-500/20 bg-black/50 px-3 py-2 text-sm text-amber-50 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  >
+                    <option value="">Select an option</option>
+                    {activeItem.pricesJson.map(option => (
+                      <option key={option.label} value={option.label}>
+                        {toTitleCase(option.label)} – ₦{option.amount.toLocaleString('en-NG')}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[11px] text-amber-100/60">
+                    For example: Full cup, Medium, 3 pieces, 8 pieces.
                   </p>
-                )}
+                </div>
+              )}
+
+              {activeItem.pricesJson && activeItem.pricesJson.length === 1 && (
+                <p className="text-[11px] text-amber-100/70">
+                  Price: ₦{activeItem.pricesJson[0].amount.toLocaleString('en-NG')} (no size
+                  selection needed).
+                </p>
+              )}
 
               <div>
-                <label className="mb-1 block text-xs font-medium text-neutral-700">
+                <label className="mb-1 block text-xs font-medium text-amber-100/80">
                   Quantity
                 </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={quantity}
-                  onChange={e => handleQuantityChange(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                />
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={decModalQty}
+                    className="h-10 w-10 rounded-xl border border-amber-500/20 bg-black/50 text-sm font-semibold text-amber-50 hover:border-amber-400/30 hover:bg-black/60"
+                    aria-label="Decrease quantity"
+                  >
+                    −
+                  </button>
+
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={quantity}
+                    onChange={e => handleQuantityChange(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-amber-500/20 bg-black/40 px-3 text-center text-sm text-amber-50 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    aria-label="Quantity"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={incModalQty}
+                    className="h-10 w-10 rounded-xl border border-amber-500/20 bg-black/50 text-sm font-semibold text-amber-50 hover:border-amber-400/30 hover:bg-black/60"
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               {itemError && (
-                <p className="rounded-md bg-red-50 px-3 py-2 text-[11px] text-red-700">
+                <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] text-red-200">
                   {itemError}
                 </p>
               )}
 
               <button
                 type="submit"
-                className="mt-1 w-full rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800"
+                className="mt-1 w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-black hover:bg-amber-400"
               >
                 Add to order
               </button>
@@ -431,108 +585,130 @@ export default function MenuClient({ items, fallbackImage }: Props) {
       )}
 
       {checkoutOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl sm:p-5">
-            <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-amber-500/20 bg-neutral-950/90 shadow-2xl backdrop-blur-sm">
+            <div className="flex items-start justify-between gap-2 border-b border-amber-500/15 px-4 py-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
                   Order summary
                 </p>
-                <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
+                <h2 className="mt-1 text-base font-semibold text-amber-50 sm:text-lg">
                   Review and send on WhatsApp
                 </h2>
               </div>
               <button
                 onClick={closeCheckout}
-                className="rounded-full border border-neutral-200 bg-white px-2 py-1 text-[11px] text-neutral-600 hover:bg-neutral-100"
+                className="rounded-full border border-amber-500/25 bg-black/60 px-3 py-1 text-[11px] font-semibold text-amber-100 hover:border-amber-400/40 hover:text-amber-50"
               >
                 Close
               </button>
             </div>
 
-            <div className="mb-3 max-h-40 space-y-2 overflow-y-auto rounded-lg bg-neutral-50 p-3 text-[11px] text-neutral-700">
-              {cartItems.map((item, index) => {
-                const name = toTitleCase(item.name);
-                const variant = item.variantLabel
-                  ? ` • ${toTitleCase(item.variantLabel)}`
-                  : '';
-                const subtotal = item.unitAmount * item.quantity;
-                return (
-                  <div
-                    key={index}
-                    className="flex items-start justify-between gap-2"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {name}
-                        {variant}
-                      </p>
-                      <p className="text-[10px] text-neutral-500">
-                        Qty: {item.quantity} • ₦
-                        {item.unitAmount.toLocaleString('en-NG')} each
-                      </p>
+            <div className="px-4 py-4">
+              <div className="mb-3 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-amber-500/10 bg-black/40 p-3 text-[11px] text-amber-100/80">
+                {cartItems.map((item, index) => {
+                  const name = toTitleCase(item.name);
+                  const variant = item.variantLabel ? ` • ${toTitleCase(item.variantLabel)}` : '';
+                  const subtotal = item.unitAmount * item.quantity;
+
+                  return (
+                    <div key={index} className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-amber-50">
+                          {name}
+                          {variant}
+                        </p>
+                        <p className="text-[10px] text-amber-100/60">
+                          ₦{item.unitAmount.toLocaleString('en-NG')} each
+                        </p>
+
+                        <div className="mt-1 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => decCartQty(index)}
+                            className="h-7 w-7 rounded-full border border-amber-500/20 bg-black/50 text-[12px] font-semibold text-amber-50 hover:border-amber-400/30 hover:bg-black/60"
+                            aria-label="Decrease quantity"
+                          >
+                            −
+                          </button>
+                          <span className="min-w-[24px] text-center text-[11px] font-semibold text-amber-50">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => incCartQty(index)}
+                            className="h-7 w-7 rounded-full border border-amber-500/20 bg-black/50 text-[12px] font-semibold text-amber-50 hover:border-amber-400/30 hover:bg-black/60"
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFromCart(index)}
+                            className="ml-2 text-[10px] font-semibold text-red-300 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end">
+                        <span className="text-[11px] font-semibold text-amber-50">
+                          ₦{subtotal.toLocaleString('en-NG')}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-[11px] font-semibold text-neutral-900">
-                        ₦{subtotal.toLocaleString('en-NG')}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFromCart(index)}
-                        className="text-[10px] text-red-500 hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="mt-1 border-t border-dashed border-neutral-200 pt-2">
-                <p className="text-[11px] font-semibold text-neutral-900">
-                  Total: ₦{cartTotal.toLocaleString('en-NG')}
-                </p>
+                  );
+                })}
+
+                <div className="mt-1 border-t border-dashed border-amber-500/15 pt-2">
+                  <p className="text-[11px] font-semibold text-amber-50">
+                    Total: ₦{cartTotal.toLocaleString('en-NG')}
+                  </p>
+                </div>
               </div>
+
+              <form onSubmit={handleSendOrder} className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-amber-100/80">
+                    Full name
+                  </label>
+                  <input
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    placeholder="First and last name"
+                    className="w-full rounded-xl border border-amber-500/20 bg-black/40 px-3 py-2 text-sm text-amber-50 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-amber-100/80">
+                    Phone (Nigeria)
+                  </label>
+                  <input
+                    value={customerPhone}
+                    onChange={e => setCustomerPhone(e.target.value)}
+                    placeholder="0803…, 0703… or +234…"
+                    className="w-full rounded-xl border border-amber-500/20 bg-black/40 px-3 py-2 text-sm text-amber-50 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  />
+                </div>
+
+                {formError && (
+                  <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] text-red-200">
+                    {formError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="mt-1 w-full rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-300"
+                >
+                  {submitting ? 'Opening WhatsApp…' : 'Send order on WhatsApp'}
+                </button>
+              </form>
             </div>
-
-            <form onSubmit={handleSendOrder} className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-neutral-700">
-                  Full name
-                </label>
-                <input
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                  placeholder="First and last name"
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-neutral-700">
-                  Phone (Nigeria)
-                </label>
-                <input
-                  value={customerPhone}
-                  onChange={e => setCustomerPhone(e.target.value)}
-                  placeholder="0803…, 0703… or +234…"
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                />
-              </div>
-
-              {formError && (
-                <p className="rounded-md bg-red-50 px-3 py-2 text-[11px] text-red-700">
-                  {formError}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="mt-1 w-full rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-300"
-              >
-                {submitting ? 'Opening WhatsApp…' : 'Send order on WhatsApp'}
-              </button>
-            </form>
           </div>
         </div>
       )}

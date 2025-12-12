@@ -17,24 +17,28 @@ export type MenuItemWithPrices = {
 export type GroupedMenu = Record<string, MenuItemWithPrices[]>;
 
 export async function getGroupedMenu(): Promise<GroupedMenu> {
-  const items = await prisma.menuItem.findMany({
-    orderBy: [{ category: "asc" }, { createdAt: "asc" }],
-  });
-
-  const groups: GroupedMenu = {};
-
-  for (const item of items) {
-    const key = item.category.trim();
-    if (!groups[key]) groups[key] = [];
-    groups[key].push({
-      id: item.id,
-      name: item.name,
-      category: item.category,
-      imageUrl: item.imageUrl,
-      description: item.description ?? null,
-      pricesJson: item.pricesJson as PriceOption[],
+  try {
+    const items = await prisma.menuItem.findMany({
+      orderBy: [{ category: "asc" }, { createdAt: "asc" }],
     });
-  }
 
-  return groups;
+    const groups: GroupedMenu = {};
+
+    for (const item of items) {
+      const key = item.category.trim();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        imageUrl: item.imageUrl,
+        description: item.description ?? null,
+        pricesJson: item.pricesJson as PriceOption[],
+      });
+    }
+
+    return groups;
+  } catch {
+    return {};
+  }
 }
