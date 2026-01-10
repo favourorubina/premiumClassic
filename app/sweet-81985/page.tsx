@@ -25,6 +25,7 @@ const BASE_CATEGORIES = [
   'Pastries',
   'Shawarma',
   'Cake Slice',
+  'Cake',
   'Drinks',
 ];
 
@@ -35,7 +36,49 @@ const emptyForm = {
   imageUrl: '',
   description: '',
   pricesText: '',
+  cakeFlavour: '',
+  cakeColor: '',
 };
+
+function buildCakeDescription(base: string, flavour: string, color: string) {
+  const lines: string[] = [];
+
+  const cleanBase = (base || '').trim();
+  if (cleanBase) lines.push(cleanBase);
+
+  const f = (flavour || '').trim();
+  const c = (color || '').trim();
+
+  if (f || c) {
+    const parts: string[] = [];
+    if (f) parts.push(`Flavour: ${f}`);
+    if (c) parts.push(`Color: ${c}`);
+    lines.push(`Cake Customization — ${parts.join(' • ')}`);
+  }
+
+  return lines.join('\n');
+}
+
+function extractCakeMeta(description?: string | null) {
+  const text = description || '';
+  const match = text.match(/Cake Customization\s*—\s*(.*)$/m);
+  const meta = match?.[1] || '';
+
+  let flavour = '';
+  let color = '';
+
+  for (const part of meta.split('•').map(s => s.trim())) {
+    const [k, ...rest] = part.split(':');
+    const v = rest.join(':').trim();
+    const key = (k || '').trim().toLowerCase();
+    if (key === 'flavour') flavour = v;
+    if (key === 'color') color = v;
+  }
+
+  const baseDescription = text.replace(/(\n)?Cake Customization\s*—.*$/m, '').trim();
+
+  return { baseDescription, flavour, color };
+}
 
 export default function AdminDashboard() {
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -90,16 +133,21 @@ export default function AdminDashboard() {
   }
 
   function startEdit(item: MenuItem) {
+    const cakeMeta = extractCakeMeta(item.description);
+
     setForm({
       id: item.id,
       name: item.name,
       category: item.category,
       imageUrl: item.imageUrl,
-      description: item.description || '',
+      description: cakeMeta.baseDescription,
       pricesText: item.pricesJson
         .map(p => `${toTitleCase(p.label)}:${p.amount}`)
         .join(', '),
+      cakeFlavour: cakeMeta.flavour,
+      cakeColor: cakeMeta.color,
     });
+
     setImageFile(null);
     setImagePreview(item.imageUrl);
     if (fileInputRef.current) {
@@ -143,11 +191,16 @@ export default function AdminDashboard() {
       const imageUrl = await uploadImageIfNeeded();
       const prices = parsePrices(form.pricesText);
 
+      const computedDescription =
+        form.category === 'Cake'
+          ? buildCakeDescription(form.description, form.cakeFlavour, form.cakeColor)
+          : form.description;
+
       const payload = {
         name: form.name,
         category: form.category,
         imageUrl,
-        description: form.description,
+        description: computedDescription,
         prices,
       };
 
@@ -343,7 +396,14 @@ export default function AdminDashboard() {
                 <select
                   className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                   value={form.category}
-                  onChange={e => setForm({ ...form, category: e.target.value })}
+                  onChange={e => {
+                    const next = e.target.value;
+                    setForm(curr => ({
+                      ...curr,
+                      category: next,
+                      ...(next !== 'Cake' ? { cakeFlavour: '', cakeColor: '' } : {}),
+                    }));
+                  }}
                 >
                   <option value="">Select a category</option>
                   {categories.map(cat => (
@@ -353,6 +413,38 @@ export default function AdminDashboard() {
                   ))}
                 </select>
               </div>
+
+              {form.category === 'Cake' && (
+                <div className="sm:col-span-2 grid gap-3 rounded-xl border border-amber-200 bg-amber-50/40 p-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-neutral-700">
+                      Cake Flavour
+                    </label>
+                    <input
+                      className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      placeholder="Vanilla, Chocolate, Red Velvet..."
+                      value={form.cakeFlavour}
+                      onChange={e => setForm({ ...form, cakeFlavour: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-neutral-700">
+                      Cake Color
+                    </label>
+                    <input
+                      className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      placeholder="White, Pink, Blue, Gold..."
+                      value={form.cakeColor}
+                      onChange={e => setForm({ ...form, cakeColor: e.target.value })}
+                    />
+                  </div>
+
+                  <p className="sm:col-span-2 text-[11px] text-neutral-500">
+                    These show as customization notes for Cake items.
+                  </p>
+                </div>
+              )}
 
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-medium text-neutral-700">
