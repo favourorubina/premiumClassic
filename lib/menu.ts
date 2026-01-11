@@ -19,7 +19,7 @@ export type GroupedMenu = Record<string, MenuItemWithPrices[]>;
 export async function getGroupedMenu(): Promise<GroupedMenu> {
   try {
     const items = await prisma.menuItem.findMany({
-      orderBy: [{ category: "asc" }, { createdAt: "asc" }],
+      orderBy: [{ category: "asc" }, { createdAt: "desc" }],
     });
 
     const groups: GroupedMenu = {};
