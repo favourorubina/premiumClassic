@@ -36,49 +36,7 @@ const emptyForm = {
   imageUrl: '',
   description: '',
   pricesText: '',
-  cakeFlavour: '',
-  cakeColor: '',
 };
-
-function buildCakeDescription(base: string, flavour: string, color: string) {
-  const lines: string[] = [];
-
-  const cleanBase = (base || '').trim();
-  if (cleanBase) lines.push(cleanBase);
-
-  const f = (flavour || '').trim();
-  const c = (color || '').trim();
-
-  if (f || c) {
-    const parts: string[] = [];
-    if (f) parts.push(`Flavour: ${f}`);
-    if (c) parts.push(`Color: ${c}`);
-    lines.push(`Cake Customization — ${parts.join(' • ')}`);
-  }
-
-  return lines.join('\n');
-}
-
-function extractCakeMeta(description?: string | null) {
-  const text = description || '';
-  const match = text.match(/Cake Customization\s*—\s*(.*)$/m);
-  const meta = match?.[1] || '';
-
-  let flavour = '';
-  let color = '';
-
-  for (const part of meta.split('•').map(s => s.trim())) {
-    const [k, ...rest] = part.split(':');
-    const v = rest.join(':').trim();
-    const key = (k || '').trim().toLowerCase();
-    if (key === 'flavour') flavour = v;
-    if (key === 'color') color = v;
-  }
-
-  const baseDescription = text.replace(/(\n)?Cake Customization\s*—.*$/m, '').trim();
-
-  return { baseDescription, flavour, color };
-}
 
 export default function AdminDashboard() {
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -133,21 +91,16 @@ export default function AdminDashboard() {
   }
 
   function startEdit(item: MenuItem) {
-    const cakeMeta = extractCakeMeta(item.description);
-
     setForm({
       id: item.id,
       name: item.name,
       category: item.category,
       imageUrl: item.imageUrl,
-      description: cakeMeta.baseDescription,
+      description: item.description || '',
       pricesText: item.pricesJson
         .map(p => `${toTitleCase(p.label)}:${p.amount}`)
         .join(', '),
-      cakeFlavour: cakeMeta.flavour,
-      cakeColor: cakeMeta.color,
     });
-
     setImageFile(null);
     setImagePreview(item.imageUrl);
     if (fileInputRef.current) {
@@ -191,16 +144,11 @@ export default function AdminDashboard() {
       const imageUrl = await uploadImageIfNeeded();
       const prices = parsePrices(form.pricesText);
 
-      const computedDescription =
-        form.category === 'Cake'
-          ? buildCakeDescription(form.description, form.cakeFlavour, form.cakeColor)
-          : form.description;
-
       const payload = {
         name: form.name,
         category: form.category,
         imageUrl,
-        description: computedDescription,
+        description: form.description,
         prices,
       };
 
@@ -277,10 +225,7 @@ export default function AdminDashboard() {
   const hasImage = !!imagePreview || !!form.imageUrl;
 
   const categories = Array.from(
-    new Set([
-      ...BASE_CATEGORIES,
-      ...items.map(i => i.category).filter(Boolean),
-    ]),
+    new Set([...BASE_CATEGORIES, ...items.map(i => i.category).filter(Boolean)]),
   );
 
   const filteredItems =
@@ -362,7 +307,7 @@ export default function AdminDashboard() {
                 </h2>
                 <p className="mt-1 text-xs text-neutral-500">
                   Use categories like Parfait, Banana Bread, Pancake, Pastries, Shawarma, Cake
-                  Slice or Drinks.
+                  Slice, Cake or Drinks.
                 </p>
               </div>
               {form.id && (
@@ -396,14 +341,7 @@ export default function AdminDashboard() {
                 <select
                   className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                   value={form.category}
-                  onChange={e => {
-                    const next = e.target.value;
-                    setForm(curr => ({
-                      ...curr,
-                      category: next,
-                      ...(next !== 'Cake' ? { cakeFlavour: '', cakeColor: '' } : {}),
-                    }));
-                  }}
+                  onChange={e => setForm({ ...form, category: e.target.value })}
                 >
                   <option value="">Select a category</option>
                   {categories.map(cat => (
@@ -413,38 +351,6 @@ export default function AdminDashboard() {
                   ))}
                 </select>
               </div>
-
-              {form.category === 'Cake' && (
-                <div className="sm:col-span-2 grid gap-3 rounded-xl border border-amber-200 bg-amber-50/40 p-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-neutral-700">
-                      Cake Flavour
-                    </label>
-                    <input
-                      className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                      placeholder="Vanilla, Chocolate, Red Velvet..."
-                      value={form.cakeFlavour}
-                      onChange={e => setForm({ ...form, cakeFlavour: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-neutral-700">
-                      Cake Color
-                    </label>
-                    <input
-                      className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                      placeholder="White, Pink, Blue, Gold..."
-                      value={form.cakeColor}
-                      onChange={e => setForm({ ...form, cakeColor: e.target.value })}
-                    />
-                  </div>
-
-                  <p className="sm:col-span-2 text-[11px] text-neutral-500">
-                    These show as customization notes for Cake items.
-                  </p>
-                </div>
-              )}
 
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-medium text-neutral-700">
@@ -543,9 +449,7 @@ export default function AdminDashboard() {
           <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-neutral-900">
-                  Menu items
-                </h2>
+                <h2 className="text-sm font-semibold text-neutral-900">Menu items</h2>
                 <p className="mt-1 text-[11px] text-neutral-500">
                   Tap an item to see details, edit or delete.
                 </p>
@@ -573,9 +477,7 @@ export default function AdminDashboard() {
               </p>
             )}
 
-            {loading && (
-              <p className="mt-4 text-[11px] text-neutral-500">Loading…</p>
-            )}
+            {loading && <p className="mt-4 text-[11px] text-neutral-500">Loading…</p>}
 
             {!loading && filteredItems.length > 0 && (
               <ul className="mt-4 grid gap-3">
@@ -642,9 +544,7 @@ export default function AdminDashboard() {
             </div>
 
             {activeItem.description && (
-              <p className="mb-2 text-xs text-neutral-700">
-                {activeItem.description}
-              </p>
+              <p className="mb-2 text-xs text-neutral-700">{activeItem.description}</p>
             )}
 
             {activeItem.pricesJson && activeItem.pricesJson.length > 0 && (

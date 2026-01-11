@@ -30,12 +30,9 @@ type CartItem = {
   variantLabel: string | null;
   unitAmount: number;
   quantity: number;
-  cakeFlavour?: string;
-  cakeColor?: string;
 };
 
 const WHATSAPP_NUMBER = '2348089464118';
-
 const STORAGE_KEY = 'premiumClassic.menuCart.v1';
 
 function isValidName(name: string) {
@@ -51,27 +48,6 @@ function isValidNigerianPhone(phone: string) {
   if (digits.startsWith('234') && digits.length === 13) return true;
   if (digits.startsWith('0') && digits.length === 11) return true;
   return false;
-}
-
-function extractCakeMeta(description: string | null) {
-  const text = description || '';
-  const match = text.match(/Cake Customization\s*—\s*(.*)$/m);
-  const meta = match?.[1] || '';
-
-  let flavour = '';
-  let color = '';
-
-  for (const part of meta.split('•').map(s => s.trim())) {
-    const [k, ...rest] = part.split(':');
-    const v = rest.join(':').trim();
-    const key = (k || '').trim().toLowerCase();
-    if (key === 'flavour') flavour = v;
-    if (key === 'color') color = v;
-  }
-
-  const baseDescription = text.replace(/(\n)?Cake Customization\s*—.*$/m, '').trim();
-
-  return { baseDescription, flavour, color };
 }
 
 function ImagePreview({
@@ -201,9 +177,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const [cakeFlavour, setCakeFlavour] = useState('');
-  const [cakeColor, setCakeColor] = useState('');
-
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -258,10 +231,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     setItemError('');
     setSelectedVariant('');
     setQuantity(1);
-
-    const meta = extractCakeMeta(item.description);
-    setCakeFlavour(meta.flavour || '');
-    setCakeColor(meta.color || '');
   }
 
   function closeItemModal() {
@@ -269,8 +238,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     setItemError('');
     setSelectedVariant('');
     setQuantity(1);
-    setCakeFlavour('');
-    setCakeColor('');
   }
 
   function decModalQty() {
@@ -324,12 +291,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
         copy[existingIndex] = {
           ...copy[existingIndex],
           quantity: copy[existingIndex].quantity + quantity,
-          ...(activeItem.category?.trim() === 'Cake'
-            ? {
-              cakeFlavour: cakeFlavour.trim() || copy[existingIndex].cakeFlavour,
-              cakeColor: cakeColor.trim() || copy[existingIndex].cakeColor,
-            }
-            : {}),
         };
         return copy;
       }
@@ -343,12 +304,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
           variantLabel,
           unitAmount: chosenOption.amount,
           quantity,
-          ...(activeItem.category?.trim() === 'Cake'
-            ? {
-              cakeFlavour: cakeFlavour.trim(),
-              cakeColor: cakeColor.trim(),
-            }
-            : {}),
         },
       ];
     });
@@ -431,16 +386,10 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     cartItems.forEach((item, index) => {
       const name = toTitleCase(item.name);
       const variant = item.variantLabel ? ` - ${toTitleCase(item.variantLabel)}` : '';
-      const cakeMeta =
-        item.category?.trim() === 'Cake' && (item.cakeFlavour || item.cakeColor)
-          ? ` (Flavour: ${item.cakeFlavour ? toTitleCase(item.cakeFlavour) : '—'}, Color: ${item.cakeColor ? toTitleCase(item.cakeColor) : '—'
-          })`
-          : '';
-
       const unit = item.unitAmount;
       const subtotal = unit * item.quantity;
       lines.push(
-        `${index + 1}) ${name}${variant}${cakeMeta} x${item.quantity} (₦${unit.toLocaleString(
+        `${index + 1}) ${name}${variant} x${item.quantity} (₦${unit.toLocaleString(
           'en-NG',
         )}) = ₦${subtotal.toLocaleString('en-NG')}`,
       );
@@ -506,33 +455,9 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                         {toTitleCase(item.name)}
                       </h3>
 
-                      {(() => {
-                        const meta = extractCakeMeta(item.description);
-                        const showCakeMeta = item.category?.trim() === 'Cake' && (meta.flavour || meta.color);
-
-                        return (
-                          <>
-                            {meta.baseDescription && (
-                              <p className="mt-1 text-xs text-amber-100/70">{meta.baseDescription}</p>
-                            )}
-
-                            {showCakeMeta && (
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-                                {meta.flavour && (
-                                  <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-black/40 px-2.5 py-1 text-[11px] font-medium text-amber-100">
-                                    Flavour: {toTitleCase(meta.flavour)}
-                                  </span>
-                                )}
-                                {meta.color && (
-                                  <span className="inline-flex items-center rounded-full border border-amber-500/20 bg-black/40 px-2.5 py-1 text-[11px] font-medium text-amber-100">
-                                    Color: {toTitleCase(meta.color)}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()}
+                      {item.description && (
+                        <p className="mt-1 text-xs text-amber-100/70">{item.description}</p>
+                      )}
 
                       {hasPrices && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -626,11 +551,13 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                   >
                     <option value="">Select an option</option>
                     {activeItem.pricesJson.map((option, idx) => (
-                      <option key={`${activeItem.id}-${option.label}-${idx}`} value={option.label}>
+                      <option
+                        key={`${activeItem.id}-${option.label}-${idx}`}
+                        value={option.label}
+                      >
                         {toTitleCase(option.label)} – ₦{option.amount.toLocaleString('en-NG')}
                       </option>
                     ))}
-
                   </select>
                   <p className="mt-1 text-[11px] text-neutral-500">
                     For example: Full cup, Medium, 3 pieces, 8 pieces.
@@ -643,41 +570,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                   Price: ₦{activeItem.pricesJson[0].amount.toLocaleString('en-NG')} (no size
                   selection needed).
                 </p>
-              )}
-
-              {activeItem.category?.trim() === 'Cake' && (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-semibold text-neutral-900">Cake customization</p>
-                  <p className="mt-1 text-[11px] text-neutral-600">
-                    Choose a flavour and preferred color (optional).
-                  </p>
-
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-neutral-700">
-                        Flavour
-                      </label>
-                      <input
-                        value={cakeFlavour}
-                        onChange={e => setCakeFlavour(e.target.value)}
-                        placeholder="Vanilla, Chocolate, Red Velvet..."
-                        className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-neutral-700">
-                        Color
-                      </label>
-                      <input
-                        value={cakeColor}
-                        onChange={e => setCakeColor(e.target.value)}
-                        placeholder="White, Pink, Blue, Gold..."
-                        className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
-                      />
-                    </div>
-                  </div>
-                </div>
               )}
 
               <div>
@@ -756,12 +648,6 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                 {cartItems.map((item, index) => {
                   const name = toTitleCase(item.name);
                   const variant = item.variantLabel ? ` • ${toTitleCase(item.variantLabel)}` : '';
-                  const cakeMeta =
-                    item.category?.trim() === 'Cake' && (item.cakeFlavour || item.cakeColor)
-                      ? ` • ${item.cakeFlavour ? `Flavour: ${toTitleCase(item.cakeFlavour)}` : ''}${item.cakeFlavour && item.cakeColor ? ' • ' : ''
-                      }${item.cakeColor ? `Color: ${toTitleCase(item.cakeColor)}` : ''}`
-                      : '';
-
                   const subtotal = item.unitAmount * item.quantity;
 
                   return (
@@ -770,9 +656,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
                         <p className="truncate font-medium text-neutral-900">
                           {name}
                           {variant}
-                          {cakeMeta}
                         </p>
-
                         <p className="text-[10px] text-neutral-600">
                           ₦{item.unitAmount.toLocaleString('en-NG')} each
                         </p>

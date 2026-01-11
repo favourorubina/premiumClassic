@@ -52,12 +52,7 @@ export default async function MenuPage() {
           </div>
         )}
 
-        {hasItems && (
-          <MenuClient
-            items={flatItems}
-            fallbackImage={fallbackImage}
-          />
-        )}
+        {hasItems && <MenuClient items={flatItems} fallbackImage={fallbackImage} />}
       </div>
     </div>
   );

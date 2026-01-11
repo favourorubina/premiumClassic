@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ADMIN_PREFIX = '/sweet-81985';
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAdmin = req.cookies.get('pc_admin')?.value === '1';
 
