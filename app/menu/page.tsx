@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getGroupedMenu } from '@/lib/menu';
 import MenuClient from './MenuClient';
 

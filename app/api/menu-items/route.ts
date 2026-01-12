@@ -3,12 +3,12 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const items = await prisma.menuItem.findMany({
-      orderBy: { createdAt: 'desc' },
+    const items = await prisma.menuItem.findMany({ orderBy: { createdAt: 'desc' } });
+
+    return NextResponse.json(items, {
+      headers: { 'Cache-Control': 'no-store, max-age=0' },
     });
-    return NextResponse.json(items);
   } catch (err) {
-    console.error('GET /api/menu-items error', err);
     return NextResponse.json({ message: 'Something went wrong' }, { status: 500 });
   }
 }
