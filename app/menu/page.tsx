@@ -24,12 +24,18 @@ export default async function MenuPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
             Premium Classic Menu
           </p>
+
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
             Explore all our treats.
           </h1>
+
           <p className="mt-3 text-sm text-neutral-600 sm:text-base">
-            Browse through the full selection of cake parfaits, pastries, banana breads,
-            shawarma and dessert boxes. We update this page as new treats are added.
+            All items on this menu are <span className="font-medium text-amber-800">pre-order only</span>.
+            Orders are prepared fresh ahead of time once confirmed.
+          </p>
+
+          <p className="mt-1 text-xs text-neutral-500">
+            Please place your order in advance so we can prepare your treats perfectly.
           </p>
         </section>
 
