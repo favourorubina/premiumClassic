@@ -1,7 +1,7 @@
-export const dynamic = 'force-dynamic';
-
 import { getGroupedMenu } from '@/lib/menu';
 import MenuClient from './MenuClient';
+
+export const dynamic = 'force-dynamic';
 
 const fallbackImage =
   'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=900&q=80';
