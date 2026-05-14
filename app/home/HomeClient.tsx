@@ -1,358 +1,280 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { Gift, MessageCircle, Sparkles, Timer, Utensils } from 'lucide-react';
+import { toTitleCase } from '@/lib/text';
 
 const fallbackImage =
   'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=80';
+
+type PriceOption = {
+  label: string;
+  amount: number;
+};
 
 type MenuItem = {
   id: string;
   name: string;
   category: string;
   imageUrl: string;
+  description: string | null;
+  pricesJson: PriceOption[];
 };
 
 interface HomeClientProps {
-  items: {
-    name: string;
-    id: string;
-    category: string;
-    imageUrl: string;
-    description: string | null;
-    pricesJson: any;
-    createdAt: Date;
-    updatedAt: Date;
-  }[];
+  items: MenuItem[];
 }
 
-type Preview = { src: string; alt: string } | null;
-
-function ImageViewModal({
-  preview,
-  onClose,
-}: {
-  preview: Preview;
-  onClose: () => void;
-}) {
-  const open = !!preview;
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-
-    const prevOverflow = document.body.style.overflow;
-    const prevPaddingRight = document.body.style.paddingRight;
-    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflow = 'hidden';
-    if (scrollBarWidth > 0) document.body.style.paddingRight = `${scrollBarWidth}px`;
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = prevOverflow;
-      document.body.style.paddingRight = prevPaddingRight;
-    };
-  }, [open, onClose]);
-
-  if (!preview) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[60] grid place-items-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Image preview"
-    >
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/70"
-        onClick={onClose}
-        aria-label="Close modal"
-      />
-
-      <div className="relative z-10 w-[min(100%,56rem)] max-h-[calc(100vh-2rem)] overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl">
-        <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3">
-          <p className="text-sm font-semibold text-neutral-900">Preview</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="min-h-0 overflow-auto bg-neutral-50">
-          <div className="relative h-[min(70vh,34rem)] w-full">
-            <Image
-              src={preview.src}
-              alt={preview.alt}
-              fill
-              className="object-contain"
-              sizes="(max-width: 896px) 100vw, 56rem"
-            />
-          </div>
-        </div>
-
-        <div className="border-t border-neutral-200 px-4 py-3 text-xs text-neutral-600">
-          Press <span className="font-semibold text-neutral-900">Esc</span> to close
-        </div>
-      </div>
-    </div>
-  );
+function lowestPrice(item?: MenuItem) {
+  const prices = item?.pricesJson || [];
+  const amounts = prices.map(price => price.amount).filter(Boolean);
+  if (amounts.length === 0) return null;
+  return Math.min(...amounts);
 }
 
-function ImageCard({
-  src,
-  alt,
-  onOpen,
-}: {
-  src: string;
-  alt: string;
-  onOpen: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="group relative h-32 w-full overflow-hidden bg-neutral-100 sm:h-36"
-      aria-label="Open image preview"
-    >
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        className="object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-105"
-        sizes="(max-width: 640px) 100vw, 33vw"
-      />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100" />
-      <div className="pointer-events-none absolute bottom-2 right-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1 text-[11px] font-semibold text-neutral-800 opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100">
-        View
-      </div>
-    </button>
-  );
+function money(amount: number) {
+  return `NGN ${amount.toLocaleString('en-NG')}`;
 }
 
 export default function HomeClient({ items }: HomeClientProps) {
-  const [preview, setPreview] = useState<Preview>(null);
+  const [heroIndex, setHeroIndex] = useState(0);
 
-  const topCategories = (() => {
-    const groups: Record<string, MenuItem[]> = {};
-    for (const item of items as any as MenuItem[]) {
-      const key = (item.category || 'Others').trim() || 'Others';
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(item);
-    }
-    return Object.entries(groups).slice(0, 3);
-  })();
+  const featuredItems = useMemo(() => {
+    const withImages = items.filter(item => item.imageUrl);
+    return (withImages.length ? withImages : items).slice(0, 6);
+  }, [items]);
+
+  const heroItems = featuredItems.length > 0 ? featuredItems.slice(0, 4) : [];
+  const activeHero = heroItems[heroIndex % Math.max(heroItems.length, 1)];
+
+  const categoryGroups = useMemo(() => {
+    const groups = new Map<string, MenuItem[]>();
+    items.forEach(item => {
+      const key = item.category?.trim() || 'Others';
+      groups.set(key, [...(groups.get(key) || []), item]);
+    });
+    return Array.from(groups.entries()).slice(0, 4);
+  }, [items]);
+
+  const heroSrc = activeHero?.imageUrl || fallbackImage;
+  const heroName = activeHero?.name || 'Premium Classic treats';
+  const heroPrice = lowestPrice(activeHero);
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900">
-      <ImageViewModal preview={preview} onClose={() => setPreview(null)} />
+    <div className="min-h-screen bg-[#f6efe3] text-[#15100b]">
+      <section className="mx-auto w-[calc(100vw-2rem)] max-w-[86rem] pb-9 pt-5 sm:w-[calc(100vw-3rem)] sm:pb-10 sm:pt-7 lg:w-[calc(100vw-4rem)] lg:pt-9">
+        <div className="grid min-w-0 grid-cols-1 overflow-hidden rounded-[2rem] border border-[#2c211733] bg-[#17110b] shadow-[0_26px_80px_rgba(32,20,10,0.18)] lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="min-w-0 p-6 text-[#fff8eb] sm:p-8 lg:flex lg:min-h-[34rem] lg:flex-col lg:justify-center lg:p-10 xl:p-12">
+          <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#e4b969]">
+            Premium Classic Pastries
+          </p>
+          <h1 className="font-display mt-4 max-w-3xl break-words text-3xl font-semibold leading-[1.08] text-white sm:mt-5 sm:text-5xl xl:text-[4rem]">
+            Fresh desserts, savoury bites and gift boxes made to order.
+          </h1>
+          <p className="mt-5 max-w-2xl text-sm font-semibold leading-7 text-[#e7d6ba] sm:text-lg sm:leading-8">
+            Choose from cake parfaits, banana breads, pancakes, pastries, shawarma and drinks.
+            Build your order in minutes and send it straight to WhatsApp.
+          </p>
 
-      <div className="mx-auto max-w-6xl px-4 pb-12 pt-8 sm:px-6 lg:px-8 lg:pt-12">
-        <section className="grid gap-10 lg:grid-cols-[1.1fr,0.9fr] lg:items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-              Premium Classic ✨
-            </p>
-
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">
-              Indulge in timeless flavors, freshly baked.
-            </h1>
-
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-600 sm:text-base">
-              From rich cake parfaits to fluffy pancakes, banana breads and loaded pastries,
-              Premium Classic turns everyday moments into little celebrations.
-            </p>
-
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <a
-                href="/menu"
-                className="inline-flex items-center rounded-full bg-amber-700 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-              >
-                View full menu
-              </a>
-
-              <a
-                href="https://wa.me/2348089464118"
-                target="_blank"
-                className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-              >
-                <span className="inline-block h-2 w-2 rounded-full bg-amber-600" />
-                Order on WhatsApp
-              </a>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-neutral-600 sm:mt-5">
-              <div>
-                <p className="font-semibold text-neutral-900">Freshly made to order</p>
-                <p className="mt-[2px]">
-                  Small batches, premium ingredients and consistent quality in every box.
-                </p>
-              </div>
-
-              <div className="hidden h-10 w-px bg-neutral-200 sm:block" />
-
-              <div>
-                <p className="font-semibold text-neutral-900">Perfect for gifting</p>
-                <p className="mt-[2px]">
-                  Birthdays, office surprises, gratitude boxes and dessert tables.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-br from-amber-500/15 via-amber-300/10 to-transparent blur-2xl" />
-            <div className="relative grid gap-3 rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm sm:p-5">
-              <div className="flex items-center justify-between gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-amber-700">
-                    Cake Parfaits
-                  </p>
-                  <p className="text-sm font-semibold text-neutral-900">
-                    Chocolate • Lemon • Red Velvet
-                  </p>
-                  <p className="mt-[2px] text-[11px] text-neutral-600">
-                    Layered goodness in every spoon.
-                  </p>
-                </div>
-                <span className="rounded-full bg-amber-700 px-3 py-1 text-[11px] font-semibold text-white">
-                  from #3,400
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-2">
-                <div className="rounded-2xl border border-neutral-200 bg-white p-3">
-                  <p className="font-semibold text-neutral-900">Banana Bread</p>
-                  <p className="mt-[2px] text-[11px] text-neutral-600">
-                    Classic, chocolate chunk, mini loaves and more.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-neutral-200 bg-white p-3">
-                  <p className="font-semibold text-neutral-900">Pastries &amp; Shawarma</p>
-                  <p className="mt-[2px] text-[11px] text-neutral-600">
-                    Meat pies, sausage rolls, juicy shawarma and more.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 text-xs sm:grid-cols-[1.3fr,0.9fr] sm:items-center">
-                <div className="rounded-2xl border border-dashed border-neutral-200 bg-white px-4 py-3">
-                  <p className="font-semibold text-neutral-900">Dessert gifts for every occasion</p>
-                  <p className="mt-[2px] text-[11px] text-neutral-600">
-                    Build a Premium box that says “you&apos;re special” without saying a word.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-neutral-200 bg-white px-3 py-3 text-[11px] text-neutral-600">
-                  <p className="font-semibold text-neutral-900">How to order</p>
-                  <ul className="mt-1 space-y-1">
-                    <li>1. Browse the menu</li>
-                    <li>2. Send your order on WhatsApp</li>
-                    <li>3. Get confirmation and pickup or delivery info</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-12 border-t border-neutral-200 pt-8 sm:mt-14 sm:pt-10">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">
-                Explore the full menu
-              </h2>
-              <p className="mt-1 text-xs text-neutral-600 sm:text-sm">
-                All items and prices are available on the Menu page.
-              </p>
-            </div>
-
-            <a
+          <div className="mt-7 grid gap-3 sm:flex sm:flex-wrap">
+            <Link
               href="/menu"
-              className="inline-flex items-center justify-center rounded-full bg-amber-700 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#e4b969] px-5 text-sm font-extrabold text-[#120d08] hover:bg-[#f2c977] sm:w-auto"
             >
-              View full menu
+              <Utensils className="h-4 w-4" />
+              Browse menu
+            </Link>
+            <a
+              href="https://wa.me/2348089464118"
+              target="_blank"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/8 px-5 text-sm font-extrabold text-[#fff8eb] hover:bg-white/15 sm:w-auto"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Order on WhatsApp
             </a>
           </div>
 
-          {items.length === 0 && (
-            <div className="mt-6 max-w-2xl rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-neutral-600 shadow-sm">
-              <h3 className="text-base font-semibold text-neutral-900">Menu is updating</h3>
-              <p className="mt-2">
-                We’re currently refreshing the Menu page. You can still message us on WhatsApp to ask
-                what’s available today.
-              </p>
-              <a
-                href="https://wa.me/2348089464118"
-                target="_blank"
-                className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-700 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-              >
-                <span className="inline-block h-2 w-2 rounded-full bg-white" />
-                Chat with us on WhatsApp
-              </a>
-            </div>
-          )}
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            {[
+              ['Pre-order fresh', 'Prepared after confirmation.'],
+              ['Gift ready', 'Boxes for birthdays and office treats.'],
+              ['Sweet plus savoury', 'Desserts, drinks and shawarma together.'],
+            ].map(([title, text]) => (
+              <div key={title} className="border-l border-[#e4b96966] pl-4">
+                <p className="text-sm font-extrabold text-white">{title}</p>
+                <p className="mt-1 text-xs font-semibold leading-5 text-[#d8c7ab]">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-          {items.length > 0 && (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {topCategories.map(([category, groupItems]) => {
-                const first = groupItems[0];
-                const image = first?.imageUrl || fallbackImage;
-                const alt = first?.name || category;
-
-                return (
-                  <article
-                    key={category}
-                    className="group overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-[2px] hover:shadow-md"
-                  >
-                    <ImageCard
-                      src={image}
-                      alt={alt}
-                      onOpen={() => setPreview({ src: image, alt })}
-                    />
-
-                    <div className="p-3">
-                      <h3 className="text-sm font-semibold text-neutral-900">{category}</h3>
-                      <p className="mt-1 text-xs text-neutral-600">
-                        {groupItems.slice(0, 3).map(i => i.name).join(' · ')}
-                        {groupItems.length > 3 ? ' and more' : ''}
-                      </p>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <section className="mt-12 rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm sm:mt-14 sm:p-6">
-          <div className="grid gap-5 sm:grid-cols-2 sm:items-center">
-            <div>
-              <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">
-                For birthdays, offices and special moments
-              </h2>
-              <p className="mt-2 text-sm text-neutral-600">
-                Whether you&apos;re stocking the fridge, surprising a loved one or setting up a
-                dessert corner, Premium Classic has a treat combination that fits perfectly.
-              </p>
-            </div>
-            <div className="space-y-2 text-xs text-neutral-600">
-              <p>• Office snack trays and meeting treats</p>
-              <p>• Dessert boxes for birthdays, anniversaries and date nights</p>
-              <p>• Custom mix: parfaits, banana bread, pastries and shawarma in one order</p>
+        <div className="relative min-w-0 border-t border-white/10 bg-[#21170e] p-4 sm:p-5 lg:flex lg:min-h-[34rem] lg:flex-col lg:border-l lg:border-t-0 lg:p-6">
+          <div className="overflow-hidden rounded-[1.5rem] border border-white/10 lg:flex-1">
+            <div className="relative min-h-[17rem] sm:min-h-[23rem] lg:h-full lg:min-h-[28rem]">
+              <Image
+                src={heroSrc}
+                alt={heroName}
+                fill
+                className="object-cover object-center"
+                sizes="(max-width: 1024px) 100vw, 44vw"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/20 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
+                <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f2c977]">
+                  Today from the menu
+                </p>
+                <h2 className="font-display mt-2 text-3xl font-semibold leading-tight text-white sm:text-4xl">
+                  {toTitleCase(heroName)}
+                </h2>
+                {heroPrice && (
+                  <p className="mt-2 text-sm font-bold text-[#ffe5b1]">from {money(heroPrice)}</p>
+                )}
+              </div>
             </div>
           </div>
-        </section>
-      </div>
+
+          {heroItems.length > 1 && (
+            <div className="mt-3 hidden grid-cols-4 gap-2 sm:grid">
+              {heroItems.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setHeroIndex(index)}
+                  className={
+                    index === heroIndex
+                      ? 'relative aspect-square overflow-hidden rounded-xl border-2 border-[#e4b969]'
+                      : 'relative aspect-square overflow-hidden rounded-xl border border-white/10 opacity-75 hover:opacity-100'
+                  }
+                  aria-label={`Show ${item.name}`}
+                >
+                  <Image src={item.imageUrl || fallbackImage} alt={item.name} fill className="object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        </div>
+      </section>
+
+      <section className="border-y border-[#3c2b1a1a] bg-[#130f0b] py-8 text-[#fff8eb]">
+        <div className="pc-container grid gap-4 sm:grid-cols-3">
+          {[
+            { icon: Sparkles, title: 'Signature parfaits', text: 'Chocolate, lemon, vanilla, milky and red velvet layers.' },
+            { icon: Gift, title: 'Custom treat boxes', text: 'Mix dessert cups, banana bread, pastries and drinks.' },
+            { icon: Timer, title: 'Order ahead', text: 'Pre-order timing keeps every batch fresh and intentional.' },
+          ].map(({ icon: Icon, title, text }) => (
+            <div key={title} className="flex gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#e4b969] text-[#130f0b]">
+                <Icon className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="font-bold">{title}</p>
+                <p className="mt-1 text-sm leading-6 text-[#d8c7ab]">{text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="pc-container py-12 lg:py-16">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="pc-eyebrow">Explore the menu</p>
+            <h2 className="font-display mt-2 text-4xl font-semibold text-[#1b1713]">
+              Choose by craving.
+            </h2>
+          </div>
+          <Link href="/menu" className="pc-button-secondary">
+            View all items
+          </Link>
+        </div>
+
+        {items.length === 0 ? (
+          <div className="pc-card mt-8 rounded-3xl p-6">
+            <h3 className="text-lg font-extrabold text-[#1b1713]">Menu is updating</h3>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6f6358]">
+              The menu is being refreshed. Message Premium Classic on WhatsApp to ask what is
+              available today.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {categoryGroups.map(([category, group]) => {
+              const first = group[0];
+              return (
+                <Link
+                  key={category}
+                  href="/menu"
+                  className="group overflow-hidden rounded-3xl border border-[#3c2b1a1a] bg-white/75 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <div className="relative aspect-[4/3]">
+                    <Image
+                      src={first?.imageUrl || fallbackImage}
+                      alt={first?.name || category}
+                      fill
+                      className="object-cover transition duration-300 group-hover:scale-105"
+                      sizes="(max-width: 1024px) 50vw, 25vw"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#98620f]">
+                      {group.length} item{group.length > 1 ? 's' : ''}
+                    </p>
+                    <h3 className="font-display mt-1 text-2xl font-semibold text-[#1b1713]">
+                      {toTitleCase(category)}
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#6f6358]">
+                      {group.slice(0, 3).map(item => toTitleCase(item.name)).join(', ')}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="pc-container pb-14">
+        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
+          <div className="rounded-[2rem] bg-[#130f0b] p-6 text-[#fff8eb] sm:p-8">
+            <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#e4b969]">
+              How ordering works
+            </p>
+            <h2 className="font-display mt-3 text-4xl font-semibold">Browse. Build. Send.</h2>
+            <div className="mt-6 grid gap-4">
+              {[
+                ['1', 'Browse the live menu and add your preferred sizes or portions.'],
+                ['2', 'Review your order with your name and Nigerian phone number.'],
+                ['3', 'Send the full summary to Premium Classic on WhatsApp.'],
+              ].map(([step, text]) => (
+                <div key={step} className="flex gap-3">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#e4b969] text-sm font-extrabold text-[#130f0b]">
+                    {step}
+                  </span>
+                  <p className="text-sm leading-6 text-[#e9dcc5]">{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              ['Birthdays', 'Parfait cups, banana bread, pancakes and dessert boxes for intimate celebrations.'],
+              ['Office treats', 'Snack trays, pastries, drinks and sweet bites for meetings or team surprises.'],
+              ['Weekend cravings', 'A soft landing for stay-home evenings, movie nights and solo treats.'],
+              ['Thank-you gifts', 'Premium combinations that feel personal without needing a big speech.'],
+            ].map(([title, text]) => (
+              <div key={title} className="rounded-3xl border border-[#3c2b1a1a] bg-white/75 p-5">
+                <h3 className="text-lg font-extrabold text-[#1b1713]">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#6f6358]">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

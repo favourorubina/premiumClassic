@@ -167,13 +167,14 @@ export default function AdminDashboard() {
       }
 
       if (!res.ok) {
-        throw new Error('Failed to save item');
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.message || 'Failed to save item');
       }
 
       resetForm();
       await loadItems();
-    } catch {
-      setError('Could not save item. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save item. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -189,12 +190,13 @@ export default function AdminDashboard() {
         return;
       }
       if (!res.ok) {
-        throw new Error('Failed to delete');
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.message || 'Failed to delete');
       }
       setActiveItem(null);
       await loadItems();
-    } catch {
-      setError('Could not delete item.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete item.');
     }
   }
 
@@ -234,27 +236,27 @@ export default function AdminDashboard() {
       : items.filter(item => item.category === filterCategory);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#f7f2e9] via-[#fbf7ef] to-[#f1e6d6]">
-      <header className="border-b border-amber-100/60 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+    <main className="min-h-screen bg-[#f4eadb] text-[#17120d]">
+      <header className="border-b border-[#3c2b1a] bg-[#130f0b] text-[#fff8eb] shadow-lg">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-amber-600/30 bg-amber-50">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[#e4b969] bg-[#fffaf3]">
               <Image
                 src="/logo.jpg"
                 alt="Premium Classic Pastries"
-                width={32}
-                height={32}
-                className="h-7 w-7 object-contain"
+                width={42}
+                height={42}
+                className="h-10 w-10 object-contain"
               />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-700">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-[#e4b969]">
                 Premium Classic
               </p>
-              <h1 className="text-sm font-semibold text-neutral-900 sm:text-base">
+              <h1 className="text-lg font-extrabold text-white sm:text-xl">
                 Admin Manager
               </h1>
-              <p className="hidden text-[11px] text-neutral-500 sm:block">
+              <p className="hidden text-sm font-semibold text-[#d8c7ab] sm:block">
                 Manage items, categories, images and prices in one place.
               </p>
             </div>
@@ -262,13 +264,13 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => window.open('/', '_blank')}
-              className="rounded-full border border-neutral-300 bg-white px-3 py-1 text-[11px] font-medium text-neutral-700 shadow-sm hover:bg-neutral-100 sm:inline-flex"
+              className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-white/20 sm:inline-flex"
             >
               View site
             </button>
             <button
               onClick={handleLogout}
-              className="rounded-full bg-neutral-900 px-3 py-1 text-[11px] font-semibold text-white hover:bg-black"
+              className="rounded-full bg-[#e4b969] px-4 py-2 text-xs font-extrabold text-[#130f0b] hover:bg-[#f2c977]"
             >
               Logout
             </button>
@@ -276,36 +278,36 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 py-5 lg:py-8">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white/70 px-4 py-3 text-xs shadow-sm backdrop-blur">
+      <div className="mx-auto max-w-6xl px-4 py-5 lg:py-8">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#3c2b1a24] bg-[#fffaf3] px-4 py-3 text-xs shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-800">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#130f0b] px-3 py-1.5 text-[11px] font-extrabold text-[#fff8eb]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#e4b969]" />
               Changes here update what customers see on the menu.
             </span>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-neutral-500">
-            <span className="rounded-full bg-neutral-100 px-2 py-1">
+          <div className="flex items-center gap-2 text-[11px] font-bold text-[#4b4037]">
+            <span className="rounded-full border border-[#3c2b1a24] bg-white px-3 py-1">
               Total items:{' '}
-              <span className="font-semibold text-neutral-900">{items.length}</span>
+              <span className="font-extrabold text-[#17120d]">{items.length}</span>
             </span>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <div className="mb-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-bold text-red-800 shadow-sm">
             {error}
           </div>
         )}
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] lg:items-start">
-          <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 lg:sticky lg:top-4">
+          <section className="rounded-2xl border border-[#3c2b1a24] bg-[#fffdf8] p-4 shadow-md sm:p-5 lg:sticky lg:top-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-neutral-900">
+                <h2 className="text-base font-extrabold text-[#17120d]">
                   {form.id ? 'Edit menu item' : 'Add new menu item'}
                 </h2>
-                <p className="mt-1 text-xs text-neutral-500">
+                <p className="mt-1 text-xs font-semibold leading-5 text-[#5a4a3b]">
                   Use categories like Parfait, Banana Bread, Pancake, Pastries, Shawarma, Cake
                   Slice, Cake or Drinks.
                 </p>
@@ -314,7 +316,7 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-full border border-neutral-300 px-3 py-1 text-[11px] font-medium text-neutral-600 hover:bg-neutral-100"
+                  className="rounded-full border border-[#3c2b1a33] bg-white px-3 py-1 text-[11px] font-extrabold text-[#17120d] hover:bg-[#f4eadb]"
                 >
                   New item
                 </button>
@@ -323,11 +325,11 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-1">
-                <label className="mb-1 block text-xs font-medium text-neutral-700">
+                <label className="mb-1 block text-xs font-extrabold text-[#2d241b]">
                   Name
                 </label>
                 <input
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-[#9f8d78] bg-white px-3 py-2 text-sm font-semibold text-[#17120d] outline-none placeholder:text-[#7f705f] focus:border-[#98620f] focus:ring-2 focus:ring-[#c88a2d33]"
                   placeholder="Chocolate Cake Parfait"
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
@@ -335,11 +337,11 @@ export default function AdminDashboard() {
               </div>
 
               <div className="sm:col-span-1">
-                <label className="mb-1 block text-xs font-medium text-neutral-700">
+                <label className="mb-1 block text-xs font-extrabold text-[#2d241b]">
                   Category
                 </label>
                 <select
-                  className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-[#9f8d78] bg-white px-3 py-2 text-sm font-semibold text-[#17120d] outline-none focus:border-[#98620f] focus:ring-2 focus:ring-[#c88a2d33]"
                   value={form.category}
                   onChange={e => setForm({ ...form, category: e.target.value })}
                 >
@@ -353,19 +355,22 @@ export default function AdminDashboard() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-neutral-700">
+                <label className="mb-1 block text-xs font-extrabold text-[#2d241b]">
                   Image
                 </label>
-                <div className="flex flex-col gap-3 rounded-lg border border-dashed border-neutral-300 bg-neutral-50/70 p-3 sm:flex-row sm:items-center">
-                  <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-200">
+                <div className="flex flex-col gap-3 rounded-lg border border-dashed border-[#9f8d78] bg-[#fff8eb] p-3 sm:flex-row sm:items-center">
+                  <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-[#e8ddce]">
                     {hasImage ? (
-                      <img
-                        src={imagePreview || form.imageUrl}
-                        alt={form.name || 'Preview'}
-                        className="h-full w-full object-cover"
-                      />
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imagePreview || form.imageUrl}
+                          alt={form.name || 'Preview'}
+                          className="h-full w-full object-cover"
+                        />
+                      </>
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-[11px] text-neutral-500">
+                      <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-[#5a4a3b]">
                         No image
                       </div>
                     )}
@@ -376,15 +381,15 @@ export default function AdminDashboard() {
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="block w-full text-xs text-neutral-700 file:mr-2 file:rounded-md file:border-0 file:bg-neutral-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-black"
+                      className="block w-full text-xs font-semibold text-[#2d241b] file:mr-2 file:rounded-md file:border-0 file:bg-[#130f0b] file:px-3 file:py-1.5 file:text-xs file:font-extrabold file:text-white hover:file:bg-black"
                     />
                     {imageFile && (
-                      <p className="mt-1 truncate text-[11px] text-neutral-500">
+                      <p className="mt-1 truncate text-[11px] font-semibold text-[#5a4a3b]">
                         {imageFile.name}
                       </p>
                     )}
                     {!imageFile && form.imageUrl && (
-                      <p className="mt-1 truncate text-[11px] text-neutral-500">
+                      <p className="mt-1 truncate text-[11px] font-semibold text-[#5a4a3b]">
                         Current image: {form.imageUrl.split('/').pop()}
                       </p>
                     )}
@@ -393,11 +398,11 @@ export default function AdminDashboard() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-neutral-700">
+                <label className="mb-1 block text-xs font-extrabold text-[#2d241b]">
                   Description (optional)
                 </label>
                 <input
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-[#9f8d78] bg-white px-3 py-2 text-sm font-semibold text-[#17120d] outline-none placeholder:text-[#7f705f] focus:border-[#98620f] focus:ring-2 focus:ring-[#c88a2d33]"
                   placeholder="Rich chocolate cake parfait layered with creamy frosting."
                   value={form.description}
                   onChange={e => setForm({ ...form, description: e.target.value })}
@@ -405,16 +410,16 @@ export default function AdminDashboard() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-neutral-700">
+                <label className="mb-1 block text-xs font-extrabold text-[#2d241b]">
                   Prices
                 </label>
                 <input
-                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                  className="w-full rounded-lg border border-[#9f8d78] bg-white px-3 py-2 text-sm font-semibold text-[#17120d] outline-none placeholder:text-[#7f705f] focus:border-[#98620f] focus:ring-2 focus:ring-[#c88a2d33]"
                   placeholder="Full cup:5000, Medium:3500"
                   value={form.pricesText}
                   onChange={e => setForm({ ...form, pricesText: e.target.value })}
                 />
-                <p className="mt-1 text-[11px] text-neutral-500">
+                <p className="mt-1 text-[11px] font-semibold text-[#5a4a3b]">
                   Use: label:amount, label:amount (Full cup:5000, Medium:3500)
                 </p>
               </div>
@@ -429,15 +434,15 @@ export default function AdminDashboard() {
                     !form.pricesText ||
                     (!imageFile && !form.imageUrl)
                   }
-                  className="rounded-lg bg-amber-700 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:bg-amber-300"
+                  className="rounded-lg bg-[#130f0b] px-4 py-2.5 text-xs font-extrabold text-white hover:bg-[#2a2017] disabled:cursor-not-allowed disabled:bg-[#b9a995]"
                 >
-                  {saving ? 'Saving…' : form.id ? 'Update item' : 'Add item'}
+                  {saving ? 'Saving...' : form.id ? 'Update item' : 'Add item'}
                 </button>
                 {form.id && (
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="rounded-lg border border-neutral-300 px-4 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+                    className="rounded-lg border border-[#3c2b1a33] bg-white px-4 py-2.5 text-xs font-extrabold text-[#17120d] hover:bg-[#f4eadb]"
                   >
                     Cancel
                   </button>
@@ -446,20 +451,20 @@ export default function AdminDashboard() {
             </form>
           </section>
 
-          <section className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <section className="rounded-2xl border border-[#3c2b1a24] bg-[#fffdf8] p-4 shadow-md sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-neutral-900">Menu items</h2>
-                <p className="mt-1 text-[11px] text-neutral-500">
+                <h2 className="text-base font-extrabold text-[#17120d]">Menu items</h2>
+                <p className="mt-1 text-[11px] font-semibold text-[#5a4a3b]">
                   Tap an item to see details, edit or delete.
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-[11px]">
-                <label className="text-neutral-500">Filter:</label>
+              <div className="flex items-center gap-2 text-[11px] font-bold">
+                <label className="text-[#4b4037]">Filter:</label>
                 <select
                   value={filterCategory}
                   onChange={e => setFilterCategory(e.target.value)}
-                  className="rounded-full border border-neutral-300 bg-white px-2 py-1 text-[11px] text-neutral-800 outline-none hover:border-amber-400"
+                  className="rounded-full border border-[#9f8d78] bg-white px-3 py-1.5 text-[11px] font-extrabold text-[#17120d] outline-none hover:border-[#98620f]"
                 >
                   <option value="All">All categories</option>
                   {categories.map(cat => (
@@ -472,22 +477,23 @@ export default function AdminDashboard() {
             </div>
 
             {!loading && filteredItems.length === 0 && (
-              <p className="mt-4 rounded-lg bg-neutral-50 px-3 py-3 text-xs text-neutral-500">
+              <p className="mt-4 rounded-lg border border-[#3c2b1a24] bg-[#fff8eb] px-3 py-3 text-xs font-semibold text-[#5a4a3b]">
                 No items to show yet. Add your first Premium Classic treat on the left.
               </p>
             )}
 
-            {loading && <p className="mt-4 text-[11px] text-neutral-500">Loading…</p>}
+            {loading && <p className="mt-4 text-[11px] font-bold text-[#5a4a3b]">Loading...</p>}
 
             {!loading && filteredItems.length > 0 && (
               <ul className="mt-4 grid gap-3">
                 {filteredItems.map(item => (
                   <li
                     key={item.id}
-                    className="flex cursor-pointer gap-3 rounded-xl border border-neutral-200 bg-neutral-50/80 p-3 hover:border-amber-200 hover:bg-white"
+                    className="flex cursor-pointer gap-3 rounded-xl border border-[#3c2b1a24] bg-white p-3 shadow-sm hover:border-[#98620f66] hover:bg-[#fff8eb]"
                     onClick={() => setActiveItem(item)}
                   >
-                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-neutral-200">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#e8ddce]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={item.imageUrl}
                         alt={item.name}
@@ -496,14 +502,14 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex flex-1 flex-col justify-center">
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-sm font-semibold text-neutral-900">
+                        <h3 className="text-sm font-extrabold text-[#17120d]">
                           {toTitleCase(item.name)}
                         </h3>
-                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700">
+                        <span className="rounded-full bg-[#130f0b] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#fff8eb]">
                           {toTitleCase(item.category)}
                         </span>
                       </div>
-                      <p className="mt-[2px] line-clamp-1 text-[11px] text-neutral-500">
+                      <p className="mt-[2px] line-clamp-1 text-[11px] font-semibold text-[#5a4a3b]">
                         {item.description || 'No description yet.'}
                       </p>
                     </div>
@@ -517,25 +523,26 @@ export default function AdminDashboard() {
 
       {activeItem && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl sm:p-5">
+          <div className="w-full max-w-md rounded-2xl border border-[#3c2b1a24] bg-[#fffdf8] p-4 shadow-xl sm:p-5">
             <div className="mb-3 flex items-start justify-between gap-2">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#98620f]">
                   {toTitleCase(activeItem.category)}
                 </p>
-                <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
+                <h2 className="mt-1 text-base font-extrabold text-[#17120d] sm:text-lg">
                   {toTitleCase(activeItem.name)}
                 </h2>
               </div>
               <button
                 onClick={() => setActiveItem(null)}
-                className="rounded-full border border-neutral-200 bg-white px-2 py-1 text-[11px] text-neutral-600 hover:bg-neutral-100"
+                className="rounded-full border border-[#3c2b1a33] bg-white px-3 py-1 text-[11px] font-extrabold text-[#17120d] hover:bg-[#f4eadb]"
               >
                 Close
               </button>
             </div>
 
-            <div className="mb-3 h-40 w-full overflow-hidden rounded-xl bg-neutral-100">
+            <div className="mb-3 h-40 w-full overflow-hidden rounded-xl bg-[#e8ddce]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={activeItem.imageUrl}
                 alt={activeItem.name}
@@ -544,7 +551,7 @@ export default function AdminDashboard() {
             </div>
 
             {activeItem.description && (
-              <p className="mb-2 text-xs text-neutral-700">{activeItem.description}</p>
+              <p className="mb-2 text-xs font-semibold text-[#4b4037]">{activeItem.description}</p>
             )}
 
             {activeItem.pricesJson && activeItem.pricesJson.length > 0 && (
@@ -552,7 +559,7 @@ export default function AdminDashboard() {
                 {activeItem.pricesJson.map(price => (
                   <span
                     key={price.label}
-                    className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800"
+                    className="inline-flex items-center rounded-full bg-[#130f0b] px-2.5 py-1 text-[11px] font-extrabold text-[#fff8eb]"
                   >
                     {toTitleCase(price.label)}: ₦{price.amount}
                   </span>
@@ -566,13 +573,13 @@ export default function AdminDashboard() {
                   startEdit(activeItem);
                   setActiveItem(null);
                 }}
-                className="flex-1 rounded-lg bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:bg-black"
+                className="flex-1 rounded-lg bg-[#130f0b] px-3 py-2.5 text-xs font-extrabold text-white hover:bg-black"
               >
                 Edit item
               </button>
               <button
                 onClick={() => handleDelete(activeItem.id)}
-                className="flex-1 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100"
+                className="flex-1 rounded-lg border border-red-300 bg-red-50 px-3 py-2.5 text-xs font-extrabold text-red-800 hover:bg-red-100"
               >
                 Delete
               </button>

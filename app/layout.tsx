@@ -18,16 +18,13 @@ const sansFont = Urbanist({
 export const metadata: Metadata = {
   title: "Premium Classic | Timeless Desserts",
   description:
-    "Premium Classic – cake parfaits, banana breads, pastries, shawarma and dessert gifts for every occasion.",
+    "Premium Classic - cake parfaits, banana breads, pastries, shawarma and dessert gifts for every occasion.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${displayFont.variable} ${sansFont.variable}`}
-    >
-      <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
+    <html lang="en" className={`${displayFont.variable} ${sansFont.variable}`}>
+      <body className="min-h-screen bg-[#fff9ef] text-[var(--pc-ink)] antialiased">
         <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
       </body>
     </html>

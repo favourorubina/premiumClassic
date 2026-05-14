@@ -1,24 +1,32 @@
-import { prisma } from '@/lib/prisma';
+import { getMenuItems } from '@/lib/menu-store';
 import HomeClient from './home/HomeClient';
 
+type HomeMenuItem = {
+  id: string;
+  name: string;
+  category: string;
+  imageUrl: string;
+  description: string | null;
+  pricesJson: {
+    label: string;
+    amount: number;
+  }[];
+};
+
 export default async function Page() {
-  let items: any[] = [];
+  let items: HomeMenuItem[] = [];
 
   try {
-    items = await prisma.menuItem.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        imageUrl: true,
-        description: true,
-        pricesJson: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-  } catch (e) {
+    const menuItems = await getMenuItems();
+    items = menuItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      imageUrl: item.imageUrl,
+      description: item.description,
+      pricesJson: item.pricesJson,
+    }));
+  } catch {
     items = [];
   }
 

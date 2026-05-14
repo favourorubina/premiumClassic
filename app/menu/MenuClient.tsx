@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
+import { Minus, Plus, Search, ShoppingBag, Trash2, X } from 'lucide-react';
 import { toTitleCase } from '@/lib/text';
 
 type PriceOption = {
@@ -33,14 +34,39 @@ type CartItem = {
 };
 
 const WHATSAPP_NUMBER = '2348089464118';
-const STORAGE_KEY = 'premiumClassic.menuCart.v1';
+const STORAGE_KEY = 'premiumClassic.menuCart.v2';
+
+function readStoredOrder() {
+  if (typeof window === 'undefined') {
+    return { cartItems: [] as CartItem[], customerName: '', customerPhone: '' };
+  }
+
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { cartItems: [] as CartItem[], customerName: '', customerPhone: '' };
+    const parsed = JSON.parse(raw) as {
+      cartItems?: CartItem[];
+      customerName?: string;
+      customerPhone?: string;
+    };
+
+    return {
+      cartItems: Array.isArray(parsed.cartItems) ? parsed.cartItems : [],
+      customerName: typeof parsed.customerName === 'string' ? parsed.customerName : '',
+      customerPhone: typeof parsed.customerPhone === 'string' ? parsed.customerPhone : '',
+    };
+  } catch {
+    return { cartItems: [] as CartItem[], customerName: '', customerPhone: '' };
+  }
+}
+
+function money(amount: number) {
+  return `NGN ${amount.toLocaleString('en-NG')}`;
+}
 
 function isValidName(name: string) {
-  const trimmed = name.trim();
-  if (!trimmed) return false;
-  const parts = trimmed.split(/\s+/);
-  if (parts.length < 2) return false;
-  return parts[0].length >= 2 && parts[1].length >= 2;
+  const parts = name.trim().split(/\s+/);
+  return parts.length >= 2 && parts[0].length >= 2 && parts[1].length >= 2;
 }
 
 function isValidNigerianPhone(phone: string) {
@@ -50,149 +76,26 @@ function isValidNigerianPhone(phone: string) {
   return false;
 }
 
-function ImagePreview({
-  src,
-  alt,
-  onOpen,
-}: {
-  src: string;
-  alt: string;
-  onOpen: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="group relative h-32 w-full overflow-hidden bg-neutral-100 sm:h-36"
-      aria-label="Open image preview"
-    >
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        className="object-cover transition-transform duration-300 motion-reduce:transition-none group-hover:scale-105"
-        sizes="(max-width: 640px) 100vw, 33vw"
-      />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100" />
-      <div className="pointer-events-none absolute bottom-2 right-2 rounded-full border border-neutral-200 bg-white/90 px-3 py-1 text-[11px] font-semibold text-neutral-800 opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-hover:opacity-100">
-        View
-      </div>
-    </button>
-  );
-}
-
-function ImageViewModal({
-  open,
-  src,
-  alt,
-  onClose,
-}: {
-  open: boolean;
-  src: string;
-  alt: string;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    if (!open) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-
-    const prevOverflow = document.body.style.overflow;
-    const prevPaddingRight = document.body.style.paddingRight;
-    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflow = 'hidden';
-    if (scrollBarWidth > 0) document.body.style.paddingRight = `${scrollBarWidth}px`;
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = prevOverflow;
-      document.body.style.paddingRight = prevPaddingRight;
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[60] grid place-items-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Image preview"
-    >
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/70"
-        onClick={onClose}
-        aria-label="Close modal"
-      />
-
-      <div className="relative z-10 w-[min(100%,56rem)] max-h-[calc(100vh-2rem)] overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl">
-        <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3">
-          <p className="text-sm font-semibold text-neutral-900">Preview</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="min-h-0 overflow-auto bg-neutral-50">
-          <div className="relative h-[min(70vh,34rem)] w-full">
-            <Image
-              src={src}
-              alt={alt}
-              fill
-              className="object-contain"
-              sizes="(max-width: 896px) 100vw, 56rem"
-            />
-          </div>
-        </div>
-
-        <div className="border-t border-neutral-200 px-4 py-3 text-xs text-neutral-600">
-          Press <span className="font-semibold text-neutral-900">Esc</span> to close
-        </div>
-      </div>
-    </div>
-  );
+function getLowestPrice(item: MenuItem) {
+  const amounts = (item.pricesJson || []).map(price => price.amount).filter(Boolean);
+  if (amounts.length === 0) return null;
+  return Math.min(...amounts);
 }
 
 export default function MenuClient({ items, fallbackImage }: Props) {
-  const [preview, setPreview] = useState<{ src: string; alt: string } | null>(null);
-
+  const [storedOrder] = useState(readStoredOrder);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [query, setQuery] = useState('');
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
   const [selectedVariant, setSelectedVariant] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [itemError, setItemError] = useState('');
-
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(storedOrder.cartItems);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerName, setCustomerName] = useState(storedOrder.customerName);
+  const [customerPhone, setCustomerPhone] = useState(storedOrder.customerPhone);
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        cartItems?: CartItem[];
-        customerName?: string;
-        customerPhone?: string;
-      };
-      if (Array.isArray(parsed.cartItems)) setCartItems(parsed.cartItems);
-      if (typeof parsed.customerName === 'string') setCustomerName(parsed.customerName);
-      if (typeof parsed.customerPhone === 'string') setCustomerPhone(parsed.customerPhone);
-    } catch {
-      return;
-    }
-  }, []);
 
   useEffect(() => {
     try {
@@ -205,53 +108,46 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     }
   }, [cartItems, customerName, customerPhone]);
 
-  const groupedByCategory = useMemo(
-    () =>
-      items.reduce<Record<string, MenuItem[]>>((acc, item) => {
-        const key = item.category?.trim() || 'Others';
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(item);
-        return acc;
-      }, {}),
-    [items],
-  );
+  const categories = useMemo(() => {
+    const names = Array.from(new Set(items.map(item => item.category?.trim() || 'Others')));
+    return ['All', ...names.sort((a, b) => a.localeCompare(b))];
+  }, [items]);
 
-  const categories = useMemo(
-    () => Object.keys(groupedByCategory).sort((a, b) => a.localeCompare(b)),
-    [groupedByCategory],
-  );
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return items.filter(item => {
+      const inCategory = selectedCategory === 'All' || item.category === selectedCategory;
+      const searchable = `${item.name} ${item.category} ${item.description || ''}`.toLowerCase();
+      return inCategory && (!normalizedQuery || searchable.includes(normalizedQuery));
+    });
+  }, [items, query, selectedCategory]);
 
   const cartTotal = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.unitAmount * item.quantity, 0),
     [cartItems],
   );
 
+  const cartCount = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems],
+  );
+
   function openItemModal(item: MenuItem) {
     setActiveItem(item);
-    setItemError('');
     setSelectedVariant('');
     setQuantity(1);
+    setItemError('');
   }
 
   function closeItemModal() {
     setActiveItem(null);
-    setItemError('');
     setSelectedVariant('');
     setQuantity(1);
+    setItemError('');
   }
 
-  function decModalQty() {
-    setQuantity(q => Math.max(1, q - 1));
-  }
-
-  function incModalQty() {
-    setQuantity(q => q + 1);
-  }
-
-  function handleQuantityChange(value: string) {
-    const num = Number(value.replace(/\D/g, ''));
-    if (!num || num < 1) setQuantity(1);
-    else setQuantity(num);
+  function changeModalQty(next: number) {
+    setQuantity(Math.max(1, next));
   }
 
   function handleAddToCart(e: React.FormEvent) {
@@ -259,31 +155,26 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     if (!activeItem) return;
 
     const options = activeItem.pricesJson || [];
-    const hasMultiple = options.length > 1;
+    const needsChoice = options.length > 1;
+    const chosenOption = needsChoice
+      ? options.find(option => option.label === selectedVariant)
+      : options[0];
 
-    let chosenOption: PriceOption | null = null;
-
-    if (hasMultiple) {
-      if (!selectedVariant) {
-        setItemError('Please choose a size/option for this item.');
-        return;
-      }
-      chosenOption = options.find(o => o.label === selectedVariant) || null;
-    } else {
-      chosenOption = options[0] || null;
-    }
-
-    if (!chosenOption) {
-      setItemError('No price option available for this item.');
+    if (needsChoice && !selectedVariant) {
+      setItemError('Please choose a size or option.');
       return;
     }
 
-    const name = activeItem.name.trim();
+    if (!chosenOption) {
+      setItemError('This item has no available price option yet.');
+      return;
+    }
+
     const variantLabel = chosenOption.label ? chosenOption.label.trim() : null;
 
     setCartItems(prev => {
       const existingIndex = prev.findIndex(
-        ci => ci.id === activeItem.id && (ci.variantLabel || '') === (variantLabel || ''),
+        item => item.id === activeItem.id && (item.variantLabel || '') === (variantLabel || ''),
       );
 
       if (existingIndex >= 0) {
@@ -299,7 +190,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
         ...prev,
         {
           id: activeItem.id,
-          name,
+          name: activeItem.name.trim(),
           category: activeItem.category,
           variantLabel,
           unitAmount: chosenOption.amount,
@@ -311,42 +202,20 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     closeItemModal();
   }
 
-  function openCheckout() {
-    if (cartItems.length === 0) return;
-    setFormError('');
-    setCheckoutOpen(true);
-  }
-
-  function closeCheckout() {
-    setCheckoutOpen(false);
-    setFormError('');
-    setSubmitting(false);
-  }
-
-  function handleRemoveFromCart(index: number) {
-    setCartItems(prev => prev.filter((_, i) => i !== index));
-  }
-
-  function incCartQty(index: number) {
+  function updateCartQty(index: number, delta: number) {
     setCartItems(prev => {
       const copy = [...prev];
       const item = copy[index];
       if (!item) return prev;
-      copy[index] = { ...item, quantity: item.quantity + 1 };
+      const nextQuantity = item.quantity + delta;
+      if (nextQuantity <= 0) return copy.filter((_, itemIndex) => itemIndex !== index);
+      copy[index] = { ...item, quantity: nextQuantity };
       return copy;
     });
   }
 
-  function decCartQty(index: number) {
-    setCartItems(prev => {
-      const copy = [...prev];
-      const item = copy[index];
-      if (!item) return prev;
-      const nextQty = item.quantity - 1;
-      if (nextQty <= 0) return copy.filter((_, i) => i !== index);
-      copy[index] = { ...item, quantity: nextQty };
-      return copy;
-    });
+  function removeCartItem(index: number) {
+    setCartItems(prev => prev.filter((_, itemIndex) => itemIndex !== index));
   }
 
   function clearStoredCart() {
@@ -361,7 +230,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     e.preventDefault();
 
     if (cartItems.length === 0) {
-      setFormError('Your order is empty. Please add at least one item.');
+      setFormError('Your order is empty. Add at least one item first.');
       return;
     }
 
@@ -377,35 +246,27 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
     setSubmitting(true);
 
-    const lines: string[] = [];
-    lines.push('Hello Premium Classic,');
-    lines.push('');
-    lines.push('I would like to place an order:');
-    lines.push('');
+    const lines = [
+      'Hello Premium Classic,',
+      '',
+      'I would like to place this order:',
+      '',
+      ...cartItems.map((item, index) => {
+        const variant = item.variantLabel ? ` - ${toTitleCase(item.variantLabel)}` : '';
+        const subtotal = item.unitAmount * item.quantity;
+        return `${index + 1}. ${toTitleCase(item.name)}${variant} x${item.quantity} (${money(
+          item.unitAmount,
+        )} each) = ${money(subtotal)}`;
+      }),
+      '',
+      `Total: ${money(cartTotal)}`,
+      '',
+      'My details:',
+      `- Name: ${customerName.trim()}`,
+      `- Phone: ${customerPhone.trim()}`,
+    ];
 
-    cartItems.forEach((item, index) => {
-      const name = toTitleCase(item.name);
-      const variant = item.variantLabel ? ` - ${toTitleCase(item.variantLabel)}` : '';
-      const unit = item.unitAmount;
-      const subtotal = unit * item.quantity;
-      lines.push(
-        `${index + 1}) ${name}${variant} x${item.quantity} (₦${unit.toLocaleString(
-          'en-NG',
-        )}) = ₦${subtotal.toLocaleString('en-NG')}`,
-      );
-    });
-
-    lines.push('');
-    lines.push(`Total: ₦${cartTotal.toLocaleString('en-NG')}`);
-    lines.push('');
-    lines.push('My details:');
-    lines.push(`- Name: ${customerName.trim()}`);
-    lines.push(`- Phone: ${customerPhone.trim()}`);
-
-    const message = lines.join('\n');
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-
-    window.open(url, '_blank');
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
 
     setSubmitting(false);
     setCheckoutOpen(false);
@@ -418,335 +279,377 @@ export default function MenuClient({ items, fallbackImage }: Props) {
 
   return (
     <>
-      <ImageViewModal
-        open={!!preview}
-        src={preview?.src || fallbackImage}
-        alt={preview?.alt || 'Preview'}
-        onClose={() => setPreview(null)}
-      />
+      <div className="mt-8 rounded-[1.5rem] border border-[#2c211733] bg-[#17110b] p-4 text-[#fff8eb] shadow-[0_22px_70px_rgba(32,20,10,0.16)]">
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98620f]" />
+            <input
+              value={query}
+              onChange={event => setQuery(event.target.value)}
+              placeholder="Search parfaits, pancakes, shawarma..."
+              className="pc-focus h-12 w-full rounded-xl border border-white/10 bg-[#fffaf3] pl-11 pr-4 text-sm font-bold text-[#15100b] placeholder:text-[#7f705f]"
+            />
+          </div>
 
-      <div className="mt-8 space-y-8 sm:mt-10">
-        {categories.map(category => (
-          <section key={category} className="space-y-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-lg font-semibold text-black sm:text-xl">
+          <div className="flex gap-2 overflow-x-auto pb-1 lg:max-w-xl">
+            {categories.map(category => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setSelectedCategory(category)}
+                className={
+                  selectedCategory === category
+                    ? 'shrink-0 rounded-xl bg-[#e4b969] px-4 py-2 text-xs font-extrabold text-[#120d08]'
+                    : 'shrink-0 rounded-xl border border-white/10 bg-white/8 px-4 py-2 text-xs font-extrabold text-[#f7e6c7] hover:bg-white/15'
+                }
+              >
                 {toTitleCase(category)}
-              </h2>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {groupedByCategory[category].map(item => {
-                const image = item.imageUrl || fallbackImage;
-                const hasPrices = item.pricesJson && item.pricesJson.length > 0;
-
-                return (
-                  <article
-                    key={item.id}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-amber-500/15 bg-neutral-950/60 shadow-sm transition hover:-translate-y-[2px] hover:border-amber-400/25 hover:shadow-md"
-                  >
-                    <ImagePreview
-                      src={image}
-                      alt={item.name}
-                      onOpen={() => setPreview({ src: image, alt: item.name })}
-                    />
-
-                    <div className="flex flex-1 flex-col p-3">
-                      <h3 className="text-sm font-semibold text-amber-50">
-                        {toTitleCase(item.name)}
-                      </h3>
-
-                      {item.description && (
-                        <p className="mt-1 text-xs text-amber-100/70">{item.description}</p>
-                      )}
-
-                      {hasPrices && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {item.pricesJson.map((option, idx) => (
-                            <span
-                              key={`${item.id}-${option.label}-${idx}`}
-                              className="inline-flex items-center rounded-full border border-amber-500/20 bg-black/40 px-2.5 py-1 text-[11px] font-medium text-amber-100"
-                            >
-                              {item.pricesJson.length > 1 && (
-                                <span className="mr-1 text-amber-200/90">
-                                  {toTitleCase(option.label)}:
-                                </span>
-                              )}
-                              ₦{option.amount.toLocaleString('en-NG')}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => openItemModal(item)}
-                        className="mt-3 inline-flex items-center justify-center rounded-full bg-amber-500 px-3 py-2 text-xs font-semibold text-black hover:bg-amber-400"
-                      >
-                        Add to order
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        ))}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
+
+      <div className="mt-6 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {filteredItems.map(item => {
+          const image = item.imageUrl || fallbackImage;
+          const lowest = getLowestPrice(item);
+
+          return (
+            <article
+              key={item.id}
+              className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#2c211724] bg-[#fffdf8] shadow-[0_10px_34px_rgba(32,20,10,0.08)] transition hover:-translate-y-1 hover:border-[#98620f66] hover:shadow-[0_18px_50px_rgba(32,20,10,0.14)]"
+            >
+              <button
+                type="button"
+                onClick={() => openItemModal(item)}
+                className="relative block aspect-[16/10] w-full overflow-hidden bg-[#ded0bd]"
+                aria-label={`Open ${item.name}`}
+              >
+                <Image
+                  src={image}
+                  alt={item.name}
+                  fill
+                  className="object-cover transition duration-300 group-hover:scale-105"
+                  sizes="(max-width: 1024px) 50vw, 33vw"
+                />
+              </button>
+
+              <div className="flex flex-1 flex-col p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-[#98620f]">
+                      {toTitleCase(item.category)}
+                    </p>
+                    <h3 className="mt-1 text-xl font-extrabold leading-7 text-[#15100b]">
+                      {toTitleCase(item.name)}
+                    </h3>
+                  </div>
+                  {lowest && (
+                    <span className="shrink-0 rounded-xl bg-[#f1e5d3] px-3 py-1 text-xs font-extrabold text-[#15100b]">
+                      {money(lowest)}
+                    </span>
+                  )}
+                </div>
+
+                {item.description && (
+                  <p className="mt-3 line-clamp-3 text-sm font-semibold leading-6 text-[#5a4a3b]">
+                    {item.description}
+                  </p>
+                )}
+
+                {item.pricesJson?.length > 1 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {item.pricesJson.slice(0, 3).map((option, index) => (
+                      <span
+                        key={`${item.id}-${option.label}-${index}`}
+                        className="rounded-lg border border-[#2c211724] bg-[#f6efe3] px-2.5 py-1 text-[11px] font-extrabold text-[#5a4a3b]"
+                      >
+                        {toTitleCase(option.label)}: {money(option.amount)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-auto pt-4">
+                  <button
+                    type="button"
+                    onClick={() => openItemModal(item)}
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#15100b] px-4 text-sm font-extrabold text-[#fff8eb] transition hover:bg-[#2a2017]"
+                  >
+                    <ShoppingBag className="h-4 w-4" />
+                    Add to order
+                  </button>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {filteredItems.length === 0 && (
+        <div className="pc-card mt-6 rounded-3xl p-6 text-sm text-[#6f6358]">
+          No matching treats yet. Try another category or search term.
+        </div>
+      )}
 
       {cartItems.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4 sm:pb-6">
-          <div className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-xs text-neutral-900 shadow-lg">
-            <div className="flex flex-col">
-              <span className="font-semibold">
-                {cartItems.length} item{cartItems.length > 1 ? 's' : ''} in order
-              </span>
-              <span className="text-[11px] text-neutral-600">
-                Total: ₦{cartTotal.toLocaleString('en-NG')}
-              </span>
+          <div className="mx-auto flex max-w-xl items-center justify-between gap-3 rounded-full border border-[#3c2b1a1a] bg-[#fffaf3]/95 px-4 py-3 text-[#1b1713] shadow-2xl backdrop-blur">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-extrabold">
+                {cartCount} item{cartCount > 1 ? 's' : ''} in order
+              </p>
+              <p className="text-xs font-bold text-[#6f6358]">Total: {money(cartTotal)}</p>
             </div>
-
             <button
-              onClick={openCheckout}
-              className="rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
+              type="button"
+              onClick={() => {
+                setFormError('');
+                setCheckoutOpen(true);
+              }}
+              className="pc-button-primary shrink-0"
             >
-              Review order &amp; send
+              Review
             </button>
           </div>
         </div>
       )}
 
       {activeItem && (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/70 px-4">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl">
-            <div className="flex items-start justify-between gap-2 border-b border-neutral-200 px-4 py-4">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-                  {toTitleCase(activeItem.category)}
-                </p>
-                <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
-                  {toTitleCase(activeItem.name)}
-                </h2>
+        <div className="fixed inset-0 z-50 grid items-end bg-black/76 p-0 sm:place-items-center sm:p-5">
+          <div className="relative grid max-h-[92dvh] w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-t-3xl bg-[#fffdf8] shadow-2xl sm:max-w-5xl sm:rounded-3xl md:max-h-[88dvh] md:grid-cols-[0.95fr_1.05fr] md:grid-rows-none">
+            <button
+              type="button"
+              onClick={closeItemModal}
+              className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-2xl bg-[#15100b] text-white shadow-lg sm:h-11 sm:w-11"
+              aria-label="Close item"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="relative h-40 bg-[#ded0bd] sm:h-64 md:h-auto md:min-h-[32rem]">
+              <Image
+                src={activeItem.imageUrl || fallbackImage}
+                alt={activeItem.name}
+                fill
+                className="object-cover object-center"
+                sizes="(max-width: 768px) 100vw, 48vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10 md:bg-gradient-to-r md:from-black/20 md:to-transparent" />
+            </div>
+
+            <form onSubmit={handleAddToCart} className="flex min-h-0 flex-col overflow-hidden">
+              <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-4 sm:p-7">
+                <div className="flex items-start justify-between gap-4 pr-10">
+                  <div className="min-w-0">
+                    <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.2em] text-[#98620f] sm:text-xs sm:tracking-[0.22em]">
+                      {toTitleCase(activeItem.category)}
+                    </p>
+                    <h2 className="font-display mt-1 text-2xl font-semibold leading-tight text-[#15100b] sm:mt-2 sm:text-4xl">
+                      {toTitleCase(activeItem.name)}
+                    </h2>
+                  </div>
+                  {activeItem.pricesJson?.length === 1 && (
+                    <span className="mt-1 shrink-0 rounded-xl bg-[#15100b] px-3 py-2 text-[11px] font-extrabold text-[#fff8eb] sm:text-xs">
+                      {money(activeItem.pricesJson[0].amount)}
+                    </span>
+                  )}
+                </div>
+
                 {activeItem.description && (
-                  <p className="mt-1 text-[11px] text-neutral-600">{activeItem.description}</p>
+                  <p className="mt-3 text-sm font-semibold leading-6 text-[#5a4a3b] sm:mt-4 sm:text-base sm:leading-7">
+                    {activeItem.description}
+                  </p>
+                )}
+
+                {activeItem.pricesJson?.length > 1 && (
+                  <div className="mt-4 sm:mt-6">
+                    <p className="text-sm font-extrabold text-[#15100b]">Choose an option</p>
+                    <div className="mt-2 grid gap-2 sm:mt-3 sm:grid-cols-2">
+                      {activeItem.pricesJson.map((option, index) => (
+                        <label
+                          key={`${activeItem.id}-${option.label}-${index}`}
+                          className={
+                            selectedVariant === option.label
+                              ? 'cursor-pointer rounded-2xl border border-[#15100b] bg-[#15100b] p-3 text-[#fff8eb] sm:p-4'
+                              : 'cursor-pointer rounded-2xl border border-[#2c211724] bg-[#f6efe3] p-3 text-[#15100b] hover:border-[#98620f66] sm:p-4'
+                          }
+                        >
+                          <input
+                            type="radio"
+                            name="variant"
+                            value={option.label}
+                            checked={selectedVariant === option.label}
+                            onChange={event => setSelectedVariant(event.target.value)}
+                            className="sr-only"
+                          />
+                          <span className="block text-sm font-extrabold">
+                            {toTitleCase(option.label)}
+                          </span>
+                          <span className="mt-1 block text-xs font-bold opacity-80">
+                            {money(option.amount)}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-[#2c211724] bg-[#f6efe3] p-3 sm:mt-6">
+                  <p className="text-sm font-extrabold text-[#15100b]">Quantity</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => changeModalQty(quantity - 1)}
+                      className="grid h-10 w-10 place-items-center rounded-xl border border-[#2c211724] bg-white"
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <input
+                      value={quantity}
+                      onChange={event =>
+                        changeModalQty(Number(event.target.value.replace(/\D/g, '')) || 1)
+                      }
+                      inputMode="numeric"
+                      className="h-10 w-16 rounded-xl border border-[#2c211724] bg-white text-center text-sm font-extrabold"
+                      aria-label="Quantity"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => changeModalQty(quantity + 1)}
+                      className="grid h-10 w-10 place-items-center rounded-xl border border-[#2c211724] bg-white"
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {itemError && (
+                  <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+                    {itemError}
+                  </p>
                 )}
               </div>
 
-              <button
-                onClick={closeItemModal}
-                className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-              >
-                Close
-              </button>
-            </div>
-
-            <form onSubmit={handleAddToCart} className="space-y-3 px-4 py-4">
-              {activeItem.pricesJson && activeItem.pricesJson.length > 1 && (
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-neutral-700">
-                    Size / option
-                  </label>
-                  <select
-                    value={selectedVariant}
-                    onChange={e => setSelectedVariant(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
-                  >
-                    <option value="">Select an option</option>
-                    {activeItem.pricesJson.map((option, idx) => (
-                      <option
-                        key={`${activeItem.id}-${option.label}-${idx}`}
-                        value={option.label}
-                      >
-                        {toTitleCase(option.label)} – ₦{option.amount.toLocaleString('en-NG')}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-[11px] text-neutral-500">
-                    For example: Full cup, Medium, 3 pieces, 8 pieces.
-                  </p>
-                </div>
-              )}
-
-              {activeItem.pricesJson && activeItem.pricesJson.length === 1 && (
-                <p className="text-[11px] text-neutral-600">
-                  Price: ₦{activeItem.pricesJson[0].amount.toLocaleString('en-NG')} (no size
-                  selection needed).
-                </p>
-              )}
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-neutral-700">Quantity</label>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={decModalQty}
-                    className="h-10 w-10 rounded-xl border border-neutral-200 bg-white text-sm font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
-
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={quantity}
-                    onChange={e => handleQuantityChange(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-neutral-200 bg-white px-3 text-center text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
-                    aria-label="Quantity"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={incModalQty}
-                    className="h-10 w-10 rounded-xl border border-neutral-200 bg-white text-sm font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
-                </div>
+              <div className="shrink-0 border-t border-[#2c211724] bg-[#fffdf8] p-3 sm:p-5">
+                <button
+                  type="submit"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#15100b] px-4 text-sm font-extrabold text-[#fff8eb] transition hover:bg-[#2a2017]"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  Add to order
+                </button>
               </div>
-
-              {itemError && (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
-                  {itemError}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                className="mt-1 w-full rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-              >
-                Add to order
-              </button>
             </form>
           </div>
         </div>
       )}
 
       {checkoutOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl">
-            <div className="flex items-start justify-between gap-2 border-b border-neutral-200 px-4 py-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/72 p-4">
+          <div className="max-h-[92vh] w-full max-w-xl overflow-hidden rounded-[2rem] bg-[#fffaf3] shadow-2xl">
+            <div className="flex items-start justify-between gap-3 border-b border-[#3c2b1a1a] p-5">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-                  Order summary
-                </p>
-                <h2 className="mt-1 text-base font-semibold text-neutral-900 sm:text-lg">
-                  Review and send on WhatsApp
+                <p className="pc-eyebrow">Order summary</p>
+                <h2 className="font-display mt-1 text-3xl font-semibold text-[#1b1713]">
+                  Review and send
                 </h2>
               </div>
-
               <button
-                onClick={closeCheckout}
-                className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                type="button"
+                onClick={() => setCheckoutOpen(false)}
+                className="grid h-10 w-10 place-items-center rounded-full border border-[#3c2b1a1a] bg-white"
+                aria-label="Close checkout"
               >
-                Close
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="px-4 py-4">
-              <div className="mb-3 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-neutral-200 bg-neutral-50 p-3 text-[11px] text-neutral-700">
+            <div className="max-h-[70vh] overflow-y-auto p-5">
+              <div className="grid gap-2 rounded-3xl border border-[#3c2b1a1a] bg-white p-3">
                 {cartItems.map((item, index) => {
-                  const name = toTitleCase(item.name);
-                  const variant = item.variantLabel ? ` • ${toTitleCase(item.variantLabel)}` : '';
                   const subtotal = item.unitAmount * item.quantity;
-
                   return (
-                    <div key={index} className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-neutral-900">
-                          {name}
-                          {variant}
+                    <div key={`${item.id}-${item.variantLabel}-${index}`} className="flex gap-3 border-b border-[#3c2b1a12] pb-3 last:border-b-0 last:pb-0">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-extrabold text-[#1b1713]">
+                          {toTitleCase(item.name)}
+                          {item.variantLabel ? ` - ${toTitleCase(item.variantLabel)}` : ''}
                         </p>
-                        <p className="text-[10px] text-neutral-600">
-                          ₦{item.unitAmount.toLocaleString('en-NG')} each
+                        <p className="mt-1 text-xs font-bold text-[#6f6358]">
+                          {money(item.unitAmount)} each
                         </p>
-
-                        <div className="mt-1 flex items-center gap-2">
+                        <div className="mt-2 flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => decCartQty(index)}
-                            className="h-7 w-7 rounded-full border border-neutral-200 bg-white text-[12px] font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                            onClick={() => updateCartQty(index, -1)}
+                            className="grid h-8 w-8 place-items-center rounded-full border border-[#3c2b1a1a]"
                             aria-label="Decrease quantity"
                           >
-                            −
+                            <Minus className="h-3.5 w-3.5" />
                           </button>
-
-                          <span className="min-w-[24px] text-center text-[11px] font-semibold text-neutral-900">
+                          <span className="min-w-6 text-center text-sm font-extrabold">
                             {item.quantity}
                           </span>
-
                           <button
                             type="button"
-                            onClick={() => incCartQty(index)}
-                            className="h-7 w-7 rounded-full border border-neutral-200 bg-white text-[12px] font-semibold text-neutral-900 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                            onClick={() => updateCartQty(index, 1)}
+                            className="grid h-8 w-8 place-items-center rounded-full border border-[#3c2b1a1a]"
                             aria-label="Increase quantity"
                           >
-                            +
+                            <Plus className="h-3.5 w-3.5" />
                           </button>
-
                           <button
                             type="button"
-                            onClick={() => handleRemoveFromCart(index)}
-                            className="ml-2 text-[10px] font-semibold text-red-600 hover:underline"
+                            onClick={() => removeCartItem(index)}
+                            className="ml-1 grid h-8 w-8 place-items-center rounded-full border border-red-200 bg-red-50 text-red-700"
+                            aria-label="Remove item"
                           >
-                            Remove
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
-
-                      <div className="flex flex-col items-end">
-                        <span className="text-[11px] font-semibold text-neutral-900">
-                          ₦{subtotal.toLocaleString('en-NG')}
-                        </span>
-                      </div>
+                      <p className="text-sm font-extrabold text-[#1b1713]">{money(subtotal)}</p>
                     </div>
                   );
                 })}
-
-                <div className="mt-1 border-t border-dashed border-neutral-200 pt-2">
-                  <p className="text-[11px] font-semibold text-neutral-900">
-                    Total: ₦{cartTotal.toLocaleString('en-NG')}
-                  </p>
+                <div className="flex items-center justify-between border-t border-dashed border-[#3c2b1a33] pt-3">
+                  <p className="font-extrabold text-[#1b1713]">Total</p>
+                  <p className="font-extrabold text-[#1b1713]">{money(cartTotal)}</p>
                 </div>
               </div>
 
-              <form onSubmit={handleSendOrder} className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-neutral-700">
-                    Full name
-                  </label>
+              <form onSubmit={handleSendOrder} className="mt-4 grid gap-3">
+                <label className="grid gap-1 text-sm font-bold text-[#1b1713]">
+                  Full name
                   <input
                     value={customerName}
-                    onChange={e => setCustomerName(e.target.value)}
+                    onChange={event => setCustomerName(event.target.value)}
                     placeholder="First and last name"
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
+                    className="pc-focus h-11 rounded-2xl border border-[#3c2b1a1a] bg-white px-4 text-sm font-semibold"
                   />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-neutral-700">
-                    Phone (Nigeria)
-                  </label>
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-[#1b1713]">
+                  Phone number
                   <input
                     value={customerPhone}
-                    onChange={e => setCustomerPhone(e.target.value)}
-                    placeholder="0803…, 0703… or +234…"
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-200"
+                    onChange={event => setCustomerPhone(event.target.value)}
+                    placeholder="0803..., 0703... or +234..."
+                    className="pc-focus h-11 rounded-2xl border border-[#3c2b1a1a] bg-white px-4 text-sm font-semibold"
                   />
-                </div>
+                </label>
 
                 {formError && (
-                  <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
+                  <p className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
                     {formError}
                   </p>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="mt-1 w-full rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
-                >
-                  {submitting ? 'Opening WhatsApp…' : 'Send order on WhatsApp'}
+                <button type="submit" disabled={submitting} className="pc-button-primary w-full disabled:opacity-60">
+                  {submitting ? 'Opening WhatsApp...' : 'Send order on WhatsApp'}
                 </button>
               </form>
             </div>

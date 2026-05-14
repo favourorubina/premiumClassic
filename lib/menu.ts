@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
-import { unstable_noStore as noStore } from "next/cache";
+import { unstable_noStore as noStore } from 'next/cache';
+import { getMenuItems } from '@/lib/menu-store';
 
 export type PriceOption = { label: string; amount: number };
 export type MenuItemWithPrices = {
@@ -16,14 +16,11 @@ export async function getGroupedMenu(): Promise<GroupedMenu> {
   noStore();
 
   try {
-    const items = await prisma.menuItem.findMany({
-      orderBy: [{ category: "asc" }, { createdAt: "desc" }],
-    });
-
+    const items = await getMenuItems();
     const groups: GroupedMenu = {};
 
     for (const item of items) {
-      const key = item.category?.trim() || "Others";
+      const key = item.category?.trim() || 'Others';
       if (!groups[key]) groups[key] = [];
       groups[key].push({
         id: item.id,
@@ -31,7 +28,7 @@ export async function getGroupedMenu(): Promise<GroupedMenu> {
         category: item.category,
         imageUrl: item.imageUrl,
         description: item.description ?? null,
-        pricesJson: item.pricesJson as PriceOption[],
+        pricesJson: item.pricesJson,
       });
     }
 

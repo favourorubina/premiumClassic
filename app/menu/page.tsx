@@ -1,3 +1,4 @@
+import { MessageCircle, ShoppingBag } from 'lucide-react';
 import { getGroupedMenu } from '@/lib/menu';
 import MenuClient from './MenuClient';
 
@@ -18,50 +19,56 @@ export default async function MenuPage() {
   );
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900">
-      <div className="mx-auto max-w-6xl px-4 pb-12 pt-8 sm:px-6 lg:px-8 lg:pt-12">
-        <section className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-            Premium Classic Menu
-          </p>
+    <div className="min-h-screen bg-[#f6efe3] text-[#15100b]">
+      <section className="mx-auto w-full max-w-[86rem] px-4 pb-10 pt-8 sm:px-6 lg:px-8 lg:pt-12">
+        <div className="grid overflow-hidden rounded-[2rem] border border-[#2c211733] bg-[#17110b] shadow-[0_26px_80px_rgba(32,20,10,0.18)] lg:grid-cols-[1fr_0.72fr]">
+          <div className="p-6 text-[#fff8eb] sm:p-8 lg:p-10">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-[#e4b969]">
+              Premium Classic Menu
+            </p>
+            <h1 className="font-display mt-3 max-w-4xl text-4xl font-semibold leading-none tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Pick treats like an order board.
+            </h1>
+            <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-[#e7d6ba]">
+              Search, filter, add quantities and send the full summary straight to WhatsApp.
+              Fresh batches, clear prices, no confusion.
+            </p>
+          </div>
+          </div>
 
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-            Explore all our treats.
-          </h1>
-
-          <p className="mt-3 text-sm text-neutral-600 sm:text-base">
-            All items on this menu are <span className="font-medium text-amber-800">pre-order only</span>.
-            Orders are prepared fresh ahead of time once confirmed.
-          </p>
-
-          <p className="mt-1 text-xs text-neutral-500">
-            Please place your order in advance so we can prepare your treats perfectly.
-          </p>
-        </section>
+          <div className="border-t border-white/10 bg-[#21170e] p-6 text-[#fff8eb] lg:border-l lg:border-t-0">
+            <div className="flex gap-4">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#e4b969] text-[#130f0b]">
+                <ShoppingBag className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-lg font-extrabold">Pre-order note</p>
+                <p className="mt-2 text-sm font-semibold leading-7 text-[#d8c7ab]">
+                  Please place orders ahead of time so Premium Classic can confirm availability,
+                  timing, pickup or delivery details.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {!hasItems && (
-          <div className="mt-8 max-w-3xl rounded-2xl bg-white/90 p-5 text-sm text-neutral-600 shadow-sm">
-            <h2 className="text-base font-semibold text-neutral-900">
-              Our menu is being refreshed
-            </h2>
-            <p className="mt-2">
-              We&apos;re currently updating the Premium Classic menu. Please check back in a
-              little while, or send us a message on WhatsApp to ask about today&apos;s available
-              treats.
+          <div className="mt-8 rounded-3xl border border-[#2c211733] bg-white p-6 shadow-lg">
+            <h2 className="text-lg font-extrabold text-[#1b1713]">The menu is being refreshed</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6f6358]">
+              Send a WhatsApp message to ask what is available today while the online menu is
+              being updated.
             </p>
-            <a
-              href="https://wa.me/2348089464118"
-              target="_blank"
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-400"
-            >
-              <span className="inline-block h-2 w-2 rounded-full bg-white" />
-              Chat with us on WhatsApp
+            <a href="https://wa.me/2348089464118" target="_blank" className="pc-button-primary mt-4">
+              <MessageCircle className="h-4 w-4" />
+              Ask on WhatsApp
             </a>
           </div>
         )}
 
         {hasItems && <MenuClient items={flatItems} fallbackImage={fallbackImage} />}
-      </div>
+      </section>
     </div>
   );
 }

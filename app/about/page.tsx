@@ -1,214 +1,157 @@
+import Image from 'next/image';
 import Link from 'next/link';
+import { Gift, MessageCircle, Phone, Sparkles } from 'lucide-react';
+
+const values = [
+  {
+    title: 'Made fresh',
+    text: 'Orders are prepared after confirmation so the texture, taste and finish stay consistent.',
+  },
+  {
+    title: 'Built for gifting',
+    text: 'Dessert boxes and treat mixes are easy to personalize for birthdays, offices and thank-you moments.',
+  },
+  {
+    title: 'Sweet plus savoury',
+    text: 'Premium Classic brings parfaits, banana bread, pastries, pancakes, shawarma and drinks into one menu.',
+  },
+];
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900">
-      <div className="mx-auto max-w-6xl px-4 pb-14 pt-8 sm:px-6 lg:px-8 lg:pt-12">
-        <section className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-            About Premium Classic
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-            Dessert moments, made soft and memorable.
+    <div className="pc-shell min-h-screen">
+      <section className="pc-container grid gap-10 pb-12 pt-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:pt-16">
+        <div>
+          <p className="pc-eyebrow">About Premium Classic</p>
+          <h1 className="font-display mt-3 text-5xl font-semibold leading-none tracking-tight text-[#1b1713] sm:text-6xl">
+            Comfort treats with a premium, personal finish.
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-neutral-600 sm:text-base">
-            Premium Classic is a small dessert studio with a big heart for comfort food. We
-            specialise in cake parfaits, fluffy pancakes, banana breads, pastries, shawarma
-            and dessert boxes that turn everyday moments into little celebrations.
+          <p className="mt-5 max-w-2xl text-base leading-8 text-[#6f6358]">
+            Premium Classic is a small food studio for soft celebration moments: cake parfaits,
+            fluffy pancakes, banana breads, pastries, shawarma, drinks and dessert boxes that
+            feel thoughtful without feeling complicated.
           </p>
-        </section>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link href="/menu" className="pc-button-primary">
+              <Sparkles className="h-4 w-4" />
+              Explore menu
+            </Link>
+            <a href="https://wa.me/2348089464118" target="_blank" className="pc-button-secondary">
+              <MessageCircle className="h-4 w-4" />
+              Message us
+            </a>
+          </div>
+        </div>
 
-        <section className="mt-10 grid gap-8 lg:grid-cols-[1.1fr,0.9fr] lg:items-start">
-          <div className="space-y-5 text-sm leading-relaxed text-neutral-700 sm:text-[0.93rem]">
-            <div>
-              <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">
-                Our story
-              </h2>
-              <p className="mt-2">
-                Premium Classic started with one simple idea: dessert should feel like a warm
-                hug, not just something sweet on a plate. From our very first cake parfait
-                cup, we&apos;ve focused on flavour, consistency and a homely touch that keeps
-                people coming back.
-              </p>
-              <p className="mt-2">
-                Over time, the menu grew into banana breads, fluffy pancakes, fully loaded meat
-                pies, sausage rolls, juicy shawarma and yoghurt drinks. But the goal stayed
-                the same: give you reliable, tasty treats that make your day softer, your
-                gatherings sweeter and your gifts more thoughtful.
-              </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-[#3c2b1a1a] bg-[#f4eadb] shadow-xl sm:translate-y-8">
+            <Image
+              src="/menu/1 chocolate cake parfait - 5000 full cup, 3500 medium cup.jpeg"
+              alt="Chocolate cake parfait"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 50vw, 24vw"
+            />
+          </div>
+          <div className="grid gap-4">
+            <div className="relative aspect-square overflow-hidden rounded-[2rem] border border-[#3c2b1a1a] bg-[#f4eadb] shadow-xl">
+              <Image
+                src="/menu/premium deluxe pancake - 6500.jpeg"
+                alt="Premium deluxe pancake"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 50vw, 24vw"
+              />
             </div>
-
-            <div>
-              <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">
-                What we bake and make
-              </h2>
-              <ul className="mt-2 space-y-2">
-                <li>
-                  <span className="font-semibold text-neutral-900">Parfaits:</span>{' '}
-                  Cake parfaits in flavours like chocolate, lemon, red velvet, milky and
-                  vanilla, plus yoghurt parfaits for a lighter option.
-                </li>
-                <li>
-                  <span className="font-semibold text-neutral-900">Banana Bread:</span>{' '}
-                  From chocolate chunk to no-sugar healthy loaves and mini sets perfect for
-                  sharing.
-                </li>
-                <li>
-                  <span className="font-semibold text-neutral-900">Pancakes:</span>{' '}
-                  Fluffy stacks with options like Nutella, regular and deluxe pancakes for
-                  proper brunch energy.
-                </li>
-                <li>
-                  <span className="font-semibold text-neutral-900">Pastries &amp; Shawarma:</span>{' '}
-                  Fully loaded meat pies, sausage rolls and juicy shawarma combinations for
-                  when you want something savoury with your sweets.
-                </li>
-                <li>
-                  <span className="font-semibold text-neutral-900">Drinks:</span>{' '}
-                  Yoghurt and zobo drinks to round off your order or pair with a dessert box.
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">
-                Made for your moments
-              </h2>
-              <p className="mt-2">
-                Premium Classic works beautifully for birthdays, office meetings, surprise
-                drops, dessert tables and quiet stay-at-home weekends. You can build a custom
-                dessert box with parfaits, banana bread, pastries and shawarma in one order
-                or keep it simple with your favourite item in multiples.
-              </p>
-              <p className="mt-2">
-                Whether it&apos;s a solo treat, &quot;thank you&quot; gift, team snack tray
-                or a mini celebration, we help you choose portions and combinations that fit.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">
-                How ordering works
-              </h2>
-              <ol className="mt-2 space-y-2">
-                <li>
-                  <span className="font-semibold text-neutral-900">1. Browse the menu:</span>{' '}
-                  Check all available items and prices on our{' '}
-                  <Link
-                    href="/menu"
-                    className="font-semibold text-amber-700 hover:text-amber-800"
-                  >
-                    Menu page
-                  </Link>
-                  .
-                </li>
-                <li>
-                  <span className="font-semibold text-neutral-900">2. Send us a message:</span>{' '}
-                  Share what you want to order on WhatsApp.
-                </li>
-                <li>
-                  <span className="font-semibold text-neutral-900">3. Confirm &amp; enjoy:</span>{' '}
-                  We will confirm availability, send final pricing, and agree on time for
-                  pickup or delivery.
-                </li>
-              </ol>
-              <p className="mt-2 text-xs text-neutral-500">
-                Most items are made fresh to order, so please place dessert box or large
-                quantity orders ahead of time.
+            <div className="rounded-[2rem] bg-[#130f0b] p-5 text-[#fff8eb]">
+              <Gift className="h-5 w-5 text-[#e4b969]" />
+              <p className="mt-3 text-lg font-extrabold">For gifts, meetings and cravings.</p>
+              <p className="mt-2 text-sm leading-6 text-[#d8c7ab]">
+                Tell us the occasion, your budget and the number of people. We can help shape a
+                treat mix that makes sense.
               </p>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="space-y-4">
-            <div className="rounded-3xl border border-amber-100 bg-white/90 p-4 shadow-sm sm:p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-                Dessert boxes &amp; gifting
-              </p>
-              <p className="mt-2 text-sm font-semibold text-neutral-900">
-                Build a Premium box that says &quot;you&apos;re special&quot;.
-              </p>
-              <p className="mt-2 text-xs leading-relaxed text-neutral-600">
-                Mix and match parfaits, banana bread, pastries and shawarma for birthdays,
-                anniversaries, &quot;just because&quot; gifts, office treats and family
-                movie nights.
-              </p>
-              <p className="mt-3 text-xs text-neutral-500">
-                Need help deciding portions? Send us your budget and number of people and we will
-                suggest combinations that make sense.
-              </p>
+      <section className="border-y border-[#3c2b1a1a] bg-white/62 py-10">
+        <div className="pc-container grid gap-4 md:grid-cols-3">
+          {values.map(value => (
+            <div key={value.title} className="rounded-3xl border border-[#3c2b1a1a] bg-[#fffaf3] p-5">
+              <h2 className="text-lg font-extrabold text-[#1b1713]">{value.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-[#6f6358]">{value.text}</p>
             </div>
+          ))}
+        </div>
+      </section>
 
-            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-4 shadow-sm sm:p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-700">
-                Reach Premium Classic
-              </p>
+      <section className="pc-container grid gap-8 py-12 lg:grid-cols-[1fr_0.8fr] lg:py-16">
+        <div className="space-y-7 text-sm leading-7 text-[#6f6358]">
+          <div>
+            <p className="pc-eyebrow">Our story</p>
+            <h2 className="font-display mt-2 text-4xl font-semibold text-[#1b1713]">
+              From one parfait cup to a full treat menu.
+            </h2>
+            <p className="mt-4">
+              Premium Classic started from the kind of dessert people remember: familiar,
+              creamy, soft, generous and presented with care. The menu grew from cake parfaits
+              into banana breads, pancakes, pastry snacks, shawarma and drinks, but the goal
+              stayed the same.
+            </p>
+            <p className="mt-3">
+              Every order should feel easy to choose, satisfying to receive and polished enough
+              to gift. That is why the menu supports both solo cravings and custom combinations
+              for groups.
+            </p>
+          </div>
 
-              <div className="mt-3 space-y-2 text-sm text-neutral-700">
-                <p>
-                  <span className="font-semibold text-neutral-900">Call:</span>{' '}
-                  <a href="tel:+2347072475343" className="text-amber-700 hover:text-amber-800">
-                    070 7247 5343
-                  </a>
-                </p>
-
-                <p>
-                  <span className="font-semibold text-neutral-900">WhatsApp:</span>{' '}
-                  <a
-                    href="https://wa.me/2348089464118"
-                    target="_blank"
-                    className="text-amber-700 hover:text-amber-800"
-                  >
-                    0808 946 4118
-                  </a>
-                </p>
-
-                <p>
-                  <span className="font-semibold text-neutral-900">Instagram:</span>{' '}
-                  <a
-                    href="https://www.instagram.com/premium81985"
-                    target="_blank"
-                    className="text-amber-700 hover:text-amber-800"
-                  >
-                    @premium81985
-                  </a>
-                </p>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                <Link
-                  href="/menu"
-                  className="inline-flex flex-1 items-center justify-center rounded-full bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 sm:flex-none sm:px-5"
-                >
-                  View full menu
-                </Link>
-
-                <a
-                  href="https://wa.me/2348089464118"
-                  target="_blank"
-                  className="inline-flex flex-1 items-center justify-center rounded-full border border-amber-200 bg-amber-500 px-4 py-2 font-medium text-black hover:bg-amber-400 sm:flex-none sm:px-5"
-                >
-                  Order on WhatsApp
-                </a>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-dashed border-amber-200 bg-amber-50/80 p-4 text-xs leading-relaxed text-neutral-700 sm:p-5">
-              <p className="font-semibold text-neutral-900">
-                Fresh batches, consistent quality.
-              </p>
-              <p className="mt-2">
-                We pay attention to texture, flavour and presentation so that the
-                &quot;Premium Classic&quot; you had last month tastes just as good the next
-                time you order it or even better.
-              </p>
-              <p className="mt-2">
-                If you&apos;re not sure what to pick, start with a cake parfait and a slice
-                of banana bread. It&apos;s a very friendly introduction to our world.
-              </p>
+          <div>
+            <p className="pc-eyebrow">How to order</p>
+            <div className="mt-4 grid gap-3">
+              {[
+                'Browse the menu and add your preferred sizes or portions.',
+                'Review your order with your name and phone number.',
+                'Send the summary on WhatsApp and wait for confirmation.',
+              ].map((step, index) => (
+                <div key={step} className="flex gap-3 rounded-3xl border border-[#3c2b1a1a] bg-white/70 p-4">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#130f0b] text-sm font-extrabold text-[#fff8eb]">
+                    {index + 1}
+                  </span>
+                  <p className="font-semibold text-[#5e5147]">{step}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+
+        <aside className="rounded-[2rem] bg-[#130f0b] p-6 text-[#fff8eb] lg:sticky lg:top-24 lg:self-start">
+          <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#e4b969]">
+            Reach Premium Classic
+          </p>
+          <div className="mt-5 grid gap-3">
+            <a
+              href="tel:+2347072475343"
+              className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 font-bold hover:bg-white/10"
+            >
+              <Phone className="h-4 w-4 text-[#e4b969]" />
+              070 7247 5343
+            </a>
+            <a
+              href="https://wa.me/2348089464118"
+              target="_blank"
+              className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 font-bold hover:bg-white/10"
+            >
+              <MessageCircle className="h-4 w-4 text-[#e4b969]" />
+              0808 946 4118
+            </a>
+          </div>
+          <p className="mt-5 text-sm leading-6 text-[#d8c7ab]">
+            For dessert boxes or larger orders, share your date, budget and number of people
+            when you message. It makes the recommendation much faster.
+          </p>
+        </aside>
+      </section>
     </div>
   );
 }
