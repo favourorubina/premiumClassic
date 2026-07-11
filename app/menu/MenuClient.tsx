@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { Minus, Plus, Search, ShoppingBag, Trash2, X } from 'lucide-react';
+import { CurrencySettings, formatMoneyFromNaira, formatRateLabel } from '@/lib/currency-format';
 import { toTitleCase } from '@/lib/text';
 
 type PriceOption = {
@@ -22,6 +23,7 @@ type MenuItem = {
 type Props = {
   items: MenuItem[];
   fallbackImage: string;
+  currencySettings: CurrencySettings;
 };
 
 type CartItem = {
@@ -60,10 +62,6 @@ function readStoredOrder() {
   }
 }
 
-function money(amount: number) {
-  return `NGN ${amount.toLocaleString('en-NG')}`;
-}
-
 function isValidName(name: string) {
   const parts = name.trim().split(/\s+/);
   return parts.length >= 2 && parts[0].length >= 2 && parts[1].length >= 2;
@@ -82,7 +80,7 @@ function getLowestPrice(item: MenuItem) {
   return Math.min(...amounts);
 }
 
-export default function MenuClient({ items, fallbackImage }: Props) {
+export default function MenuClient({ items, fallbackImage, currencySettings }: Props) {
   const [storedOrder] = useState(readStoredOrder);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [query, setQuery] = useState('');
@@ -96,6 +94,10 @@ export default function MenuClient({ items, fallbackImage }: Props) {
   const [customerPhone, setCustomerPhone] = useState(storedOrder.customerPhone);
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  function money(amount: number) {
+    return formatMoneyFromNaira(amount, currencySettings);
+  }
 
   useEffect(() => {
     try {
@@ -131,6 +133,22 @@ export default function MenuClient({ items, fallbackImage }: Props) {
     () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
     [cartItems],
   );
+
+  const currencyNote = useMemo(() => {
+    if (currencySettings.activeCurrency !== 'GBP' || !currencySettings.ngnToGbpRate) {
+      return null;
+    }
+
+    const updatedAt = currencySettings.rateFetchedAt
+      ? new Date(currencySettings.rateFetchedAt).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      : 'saved rate';
+
+    return `Prices shown in GBP (${formatRateLabel(currencySettings)}, updated ${updatedAt}).`;
+  }, [currencySettings]);
 
   function openItemModal(item: MenuItem) {
     setActiveItem(item);
@@ -260,6 +278,7 @@ export default function MenuClient({ items, fallbackImage }: Props) {
       }),
       '',
       `Total: ${money(cartTotal)}`,
+      ...(currencyNote ? ['', currencyNote] : []),
       '',
       'My details:',
       `- Name: ${customerName.trim()}`,

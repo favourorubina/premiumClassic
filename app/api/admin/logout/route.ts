@@ -5,7 +5,7 @@ export async function POST() {
 
   res.cookies.set('pc_admin', '', {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
     maxAge: 0,

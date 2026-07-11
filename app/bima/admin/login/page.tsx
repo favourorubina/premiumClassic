@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push('/sweet-81985');
+      router.push('/bima/admin');
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {

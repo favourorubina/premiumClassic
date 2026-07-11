@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Gift, MessageCircle, Sparkles, Timer, Utensils } from 'lucide-react';
+import { CurrencySettings, formatMoneyFromNaira } from '@/lib/currency-format';
 import { toTitleCase } from '@/lib/text';
 
 const fallbackImage =
@@ -25,6 +26,7 @@ type MenuItem = {
 
 interface HomeClientProps {
   items: MenuItem[];
+  currencySettings: CurrencySettings;
 }
 
 function lowestPrice(item?: MenuItem) {
@@ -34,12 +36,12 @@ function lowestPrice(item?: MenuItem) {
   return Math.min(...amounts);
 }
 
-function money(amount: number) {
-  return `NGN ${amount.toLocaleString('en-NG')}`;
-}
-
-export default function HomeClient({ items }: HomeClientProps) {
+export default function HomeClient({ items, currencySettings }: HomeClientProps) {
   const [heroIndex, setHeroIndex] = useState(0);
+
+  function money(amount: number) {
+    return formatMoneyFromNaira(amount, currencySettings);
+  }
 
   const featuredItems = useMemo(() => {
     const withImages = items.filter(item => item.imageUrl);

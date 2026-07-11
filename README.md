@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Premium Classic
 
-## Getting Started
+Next.js menu and ordering site for Premium Classic Pastries.
 
-First, run the development server:
+## Local Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Fill `.env` with Firebase Admin, Cloudinary, admin password, and exchange-rate values.
+
+For local Firebase Admin, keep the downloaded service-account JSON in `.secrets/` and set `FIREBASE_SERVICE_ACCOUNT_PATH`.
+
+For Vercel, do not upload `.secrets/`. Add `FIREBASE_SERVICE_ACCOUNT_JSON` as a protected environment variable instead. Its value can be either the raw service-account JSON or the base64-encoded JSON. Also add the other runtime values such as `ADMIN_PASSWORD`, Cloudinary keys, and exchange-rate settings in Vercel Project Settings -> Environment Variables.
+
+3. Start development:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The admin dashboard is available at `/bima/admin`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Firestore Data
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Menu items live in the Firestore `menuItems` collection. Site currency settings live in `siteSettings/currency`.
 
-## Learn More
+To import the Neon/Prisma export into Firestore:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run firebase:import-menu
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+By default the importer uses `../MenuItem.json` when it exists, then falls back to `data/menu-items.json`. You can pass an explicit file too:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run firebase:import-menu -- "C:\Users\Ifeanyi\Desktop\Program\premiumcLASSIC\MenuItem.json"
+```
 
-## Deploy on Vercel
+The menu import preserves document IDs, prices, Cloudinary image URLs, and timestamps. It also creates a default `siteSettings/currency` document when one does not already exist.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Currency
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Prices are stored as NGN base values. Admin can switch display between NGN and GBP in `/bima/admin`.
+
+GBP conversion uses ExchangeRate-API first when `EXCHANGE_RATE_API_KEY` is configured, with Frankfurter as a fallback. The app refreshes the NGN-to-GBP rate when GBP is enabled and the saved rate is at least one week old.

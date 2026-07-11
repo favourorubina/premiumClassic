@@ -9,7 +9,7 @@ export default function ClientLayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/sweet-81985");
+  const isAdmin = pathname.startsWith("/bima/admin");
 
   if (isAdmin) return <>{children}</>;
 

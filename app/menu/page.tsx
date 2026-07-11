@@ -1,5 +1,7 @@
 import { MessageCircle, ShoppingBag } from 'lucide-react';
+import { DEFAULT_CURRENCY_SETTINGS } from '@/lib/currency-format';
 import { getGroupedMenu } from '@/lib/menu';
+import { getCurrencySettings } from '@/lib/site-settings-store';
 import MenuClient from './MenuClient';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +10,10 @@ const fallbackImage =
   'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=900&q=80';
 
 export default async function MenuPage() {
-  const groups = await getGroupedMenu();
+  const [groups, currencySettings] = await Promise.all([
+    getGroupedMenu(),
+    getCurrencySettings({ refreshIfStale: true }).catch(() => DEFAULT_CURRENCY_SETTINGS),
+  ]);
   const hasItems = Object.keys(groups).length > 0;
 
   const flatItems = Object.entries(groups).flatMap(([category, items]) =>
@@ -67,7 +72,13 @@ export default async function MenuPage() {
           </div>
         )}
 
-        {hasItems && <MenuClient items={flatItems} fallbackImage={fallbackImage} />}
+        {hasItems && (
+          <MenuClient
+            items={flatItems}
+            fallbackImage={fallbackImage}
+            currencySettings={currencySettings}
+          />
+        )}
       </section>
     </div>
   );

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ADMIN_PREFIX = '/sweet-81985';
+const ADMIN_PREFIX = '/bima/admin';
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -20,7 +20,8 @@ export function proxy(req: NextRequest) {
 
   if (
     pathname.startsWith('/api/menu-items') ||
-    pathname.startsWith('/api/admin/upload')
+    pathname.startsWith('/api/admin/upload') ||
+    (pathname.startsWith('/api/site-settings') && req.method !== 'GET')
   ) {
     if (!isAdmin) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -31,5 +32,12 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/sweet-81985', '/sweet-81985/:path*', '/api/menu-items/:path*', '/api/admin/:path*'],
+  matcher: [
+    '/bima/admin',
+    '/bima/admin/:path*',
+    '/api/menu-items/:path*',
+    '/api/admin/:path*',
+    '/api/site-settings',
+    '/api/site-settings/:path*',
+  ],
 };

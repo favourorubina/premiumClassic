@@ -2,6 +2,14 @@
 
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+import { Banknote, PoundSterling, RefreshCw } from 'lucide-react';
+import {
+  CurrencyCode,
+  CurrencySettings,
+  DEFAULT_CURRENCY_SETTINGS,
+  formatMoneyFromNaira,
+  formatRateLabel,
+} from '@/lib/currency-format';
 import { toTitleCase } from '@/lib/text';
 
 type PriceOption = {
@@ -38,6 +46,8 @@ const emptyForm = {
   pricesText: '',
 };
 
+const ADMIN_LOGIN_PATH = '/bima/admin/login';
+
 export default function AdminDashboard() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +58,9 @@ export default function AdminDashboard() {
   const [imagePreview, setImagePreview] = useState('');
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
   const [filterCategory, setFilterCategory] = useState('All');
+  const [currencySettings, setCurrencySettings] =
+    useState<CurrencySettings>(DEFAULT_CURRENCY_SETTINGS);
+  const [savingCurrency, setSavingCurrency] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function loadItems() {
@@ -56,7 +69,7 @@ export default function AdminDashboard() {
     try {
       const res = await fetch('/api/menu-items');
       if (res.status === 401) {
-        window.location.href = '/sweet-81985/login';
+        window.location.href = ADMIN_LOGIN_PATH;
         return;
       }
       if (!res.ok) {
@@ -71,9 +84,55 @@ export default function AdminDashboard() {
     }
   }
 
+  async function loadSettings() {
+    try {
+      const res = await fetch('/api/site-settings');
+      if (!res.ok) return;
+      const data = await res.json();
+      setCurrencySettings(data);
+    } catch {
+      return;
+    }
+  }
+
   useEffect(() => {
     loadItems();
+    loadSettings();
   }, []);
+
+  function money(amount: number) {
+    return formatMoneyFromNaira(amount, currencySettings);
+  }
+
+  async function handleCurrencyChange(activeCurrency: CurrencyCode, refreshRate = false) {
+    setSavingCurrency(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/site-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activeCurrency, refreshRate }),
+      });
+
+      if (res.status === 401) {
+        window.location.href = ADMIN_LOGIN_PATH;
+        return;
+      }
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.message || 'Could not update currency');
+      }
+
+      const data = await res.json();
+      setCurrencySettings(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update currency.');
+    } finally {
+      setSavingCurrency(false);
+    }
+  }
 
   function parsePrices(text: string): PriceOption[] {
     return text
@@ -162,7 +221,7 @@ export default function AdminDashboard() {
       });
 
       if (res.status === 401) {
-        window.location.href = '/sweet-81985/login';
+        window.location.href = ADMIN_LOGIN_PATH;
         return;
       }
 
@@ -186,7 +245,7 @@ export default function AdminDashboard() {
     try {
       const res = await fetch(`/api/menu-items/${id}`, { method: 'DELETE' });
       if (res.status === 401) {
-        window.location.href = '/sweet-81985/login';
+        window.location.href = ADMIN_LOGIN_PATH;
         return;
       }
       if (!res.ok) {
@@ -202,7 +261,7 @@ export default function AdminDashboard() {
 
   async function handleLogout() {
     await fetch('/api/admin/logout', { method: 'POST' });
-    window.location.href = '/sweet-81985/login';
+    window.location.href = ADMIN_LOGIN_PATH;
   }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -291,6 +350,61 @@ export default function AdminDashboard() {
               Total items:{' '}
               <span className="font-extrabold text-[#17120d]">{items.length}</span>
             </span>
+          </div>
+        </div>
+
+        <div className="mb-5 rounded-2xl border border-[#3c2b1a24] bg-[#fffdf8] px-4 py-4 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#98620f]">
+                Store currency
+              </p>
+              <p className="mt-1 text-sm font-bold text-[#17120d]">
+                Showing {currencySettings.activeCurrency === 'GBP' ? 'pounds' : 'naira'}
+              </p>
+              <p className="mt-1 text-[11px] font-semibold text-[#5a4a3b]">
+                {formatRateLabel(currencySettings)}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={savingCurrency}
+                onClick={() => handleCurrencyChange('NGN')}
+                className={
+                  currencySettings.activeCurrency === 'NGN'
+                    ? 'inline-flex items-center gap-2 rounded-lg bg-[#130f0b] px-4 py-2 text-xs font-extrabold text-white'
+                    : 'inline-flex items-center gap-2 rounded-lg border border-[#3c2b1a33] bg-white px-4 py-2 text-xs font-extrabold text-[#17120d] hover:bg-[#f4eadb]'
+                }
+              >
+                <Banknote className="h-4 w-4" />
+                Naira
+              </button>
+              <button
+                type="button"
+                disabled={savingCurrency}
+                onClick={() => handleCurrencyChange('GBP')}
+                className={
+                  currencySettings.activeCurrency === 'GBP'
+                    ? 'inline-flex items-center gap-2 rounded-lg bg-[#130f0b] px-4 py-2 text-xs font-extrabold text-white'
+                    : 'inline-flex items-center gap-2 rounded-lg border border-[#3c2b1a33] bg-white px-4 py-2 text-xs font-extrabold text-[#17120d] hover:bg-[#f4eadb]'
+                }
+              >
+                <PoundSterling className="h-4 w-4" />
+                Pound
+              </button>
+              {currencySettings.activeCurrency === 'GBP' && (
+                <button
+                  type="button"
+                  disabled={savingCurrency}
+                  onClick={() => handleCurrencyChange('GBP', true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#98620f55] bg-[#fff8eb] px-4 py-2 text-xs font-extrabold text-[#98620f] hover:bg-[#f4eadb] disabled:opacity-60"
+                >
+                  <RefreshCw className={savingCurrency ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+                  Refresh rate
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -411,7 +525,7 @@ export default function AdminDashboard() {
 
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-extrabold text-[#2d241b]">
-                  Prices
+                  Prices (NGN base)
                 </label>
                 <input
                   className="w-full rounded-lg border border-[#9f8d78] bg-white px-3 py-2 text-sm font-semibold text-[#17120d] outline-none placeholder:text-[#7f705f] focus:border-[#98620f] focus:ring-2 focus:ring-[#c88a2d33]"
@@ -561,7 +675,7 @@ export default function AdminDashboard() {
                     key={price.label}
                     className="inline-flex items-center rounded-full bg-[#130f0b] px-2.5 py-1 text-[11px] font-extrabold text-[#fff8eb]"
                   >
-                    {toTitleCase(price.label)}: ₦{price.amount}
+                    {toTitleCase(price.label)}: {money(price.amount)}
                   </span>
                 ))}
               </div>
