@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteMenuItem, updateMenuItem, usingFirebaseMenuStore } from '@/lib/menu-store';
+import { isAdminRequest } from '@/lib/admin-auth';
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -7,6 +8,10 @@ type RouteParams = {
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
+    if (!(await isAdminRequest(req))) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!usingFirebaseMenuStore()) {
       return NextResponse.json(
         { message: 'Firebase is not configured. Add credentials to .env.local first.' },
@@ -31,8 +36,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
+    if (!(await isAdminRequest(req))) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!usingFirebaseMenuStore()) {
       return NextResponse.json(
         { message: 'Firebase is not configured. Add credentials to .env.local first.' },

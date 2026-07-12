@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { isAdminRequest } from '@/lib/admin-auth';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -9,6 +10,10 @@ cloudinary.config({
 
 export async function POST(req: NextRequest) {
   try {
+    if (!(await isAdminRequest(req))) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file');
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCurrencyCode } from '@/lib/currency-format';
 import { getCurrencySettings, updateCurrencySettings } from '@/lib/site-settings-store';
+import { isAdminRequest } from '@/lib/admin-auth';
 
 export async function GET() {
   try {
@@ -15,6 +16,10 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
+    if (!(await isAdminRequest(req))) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
 
     if (!isCurrencyCode(body.activeCurrency)) {
@@ -24,6 +29,7 @@ export async function PATCH(req: NextRequest) {
     const settings = await updateCurrencySettings({
       activeCurrency: body.activeCurrency,
       refreshRate: Boolean(body.refreshRate),
+      ngnToGbpRate: body.ngnToGbpRate === undefined ? undefined : Number(body.ngnToGbpRate),
     });
 
     return NextResponse.json(settings);
@@ -32,4 +38,3 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ message }, { status: 500 });
   }
 }
-

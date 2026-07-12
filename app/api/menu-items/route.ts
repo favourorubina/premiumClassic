@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMenuItem, getMenuItems, usingFirebaseMenuStore } from '@/lib/menu-store';
+import { isAdminRequest } from '@/lib/admin-auth';
 
 export async function GET() {
   try {
@@ -15,6 +16,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!(await isAdminRequest(req))) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!usingFirebaseMenuStore()) {
       return NextResponse.json(
         { message: 'Firebase is not configured. Add credentials to .env.local first.' },

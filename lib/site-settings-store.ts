@@ -176,6 +176,7 @@ export async function getCurrencySettings(options?: { refreshIfStale?: boolean }
 export async function updateCurrencySettings(options: {
   activeCurrency: CurrencyCode;
   refreshRate?: boolean;
+  ngnToGbpRate?: number;
 }) {
   if (!isCurrencyCode(options.activeCurrency)) {
     throw new Error('Unsupported currency.');
@@ -187,10 +188,22 @@ export async function updateCurrencySettings(options: {
     activeCurrency: options.activeCurrency,
   };
 
+  if (options.activeCurrency === 'GBP' && options.ngnToGbpRate !== undefined) {
+    if (!Number.isFinite(options.ngnToGbpRate) || options.ngnToGbpRate <= 0) {
+      throw new Error('Enter a valid GBP exchange rate.');
+    }
+
+    return persistSettings({
+      ...next,
+      ngnToGbpRate: options.ngnToGbpRate,
+      rateFetchedAt: new Date().toISOString(),
+      rateProvider: 'manual',
+    });
+  }
+
   if (options.activeCurrency === 'GBP' && (options.refreshRate || isRateStale(next))) {
     return refreshRate(next);
   }
 
   return persistSettings(next);
 }
-

@@ -1,49 +1,38 @@
-# Premium Classic
+# Premium Classic Pastries
 
-Next.js menu and ordering site for Premium Classic Pastries.
+Premium Classic is a bakery menu and ordering website for freshly prepared desserts, pastries, savoury bites and drinks.
 
-## Local Setup
+## What You Can Order
 
-1. Install dependencies:
+- Cake parfaits and yoghurt parfaits
+- Banana breads and cake slices
+- Pancakes and dessert combinations
+- Pastries and sausage rolls
+- Shawarma and savoury options
+- Yoghurt drinks, zobo and other refreshments
 
-```bash
-npm install
-```
+## How Ordering Works
 
-2. Fill `.env` with Firebase Admin, Cloudinary, admin password, and exchange-rate values.
+Customers can browse the live menu, search by name, filter by category, choose a size or portion and adjust quantities. The website prepares a complete order summary with the customer&apos;s name and phone number, then opens WhatsApp so the order can be sent directly to Premium Classic for confirmation.
 
-For local Firebase Admin, keep the downloaded service-account JSON in `.secrets/` and set `FIREBASE_SERVICE_ACCOUNT_PATH`.
+Orders are prepared after confirmation. Availability, preparation time, pickup and delivery details are agreed on WhatsApp.
 
-For Vercel, do not upload `.secrets/`. Add `FIREBASE_SERVICE_ACCOUNT_JSON` as a protected environment variable instead. Its value can be either the raw service-account JSON or the base64-encoded JSON. Also add the other runtime values such as `ADMIN_PASSWORD`, Cloudinary keys, and exchange-rate settings in Vercel Project Settings -> Environment Variables.
+## Website Features
 
-3. Start development:
+- Responsive customer experience for phones, tablets and desktop screens
+- Searchable menu with clear prices and product images
+- Saved order basket that remains available while browsing
+- Naira and pound display options
+- WhatsApp ordering with an automatic order summary
+- Search engine metadata, sitemap, robots file and bakery structured data
+- Google Analytics support, Vercel Analytics and Vercel Speed Insights
 
-```bash
-npm run dev
-```
+## Bakery Administration
 
-The admin dashboard is available at `/bima/admin`.
+The private admin area lets the Premium Classic team add, edit and remove menu items, upload product images, manage prices and categories, switch the display currency and refresh exchange rates. The administrator can also replace the initial password; once changed, the previous password and older sessions are no longer accepted.
 
-## Firestore Data
+## Contact
 
-Menu items live in the Firestore `menuItems` collection. Site currency settings live in `siteSettings/currency`.
-
-To import the Neon/Prisma export into Firestore:
-
-```bash
-npm run firebase:import-menu
-```
-
-By default the importer uses `../MenuItem.json` when it exists, then falls back to `data/menu-items.json`. You can pass an explicit file too:
-
-```bash
-npm run firebase:import-menu -- "C:\Users\Ifeanyi\Desktop\Program\premiumcLASSIC\MenuItem.json"
-```
-
-The menu import preserves document IDs, prices, Cloudinary image URLs, and timestamps. It also creates a default `siteSettings/currency` document when one does not already exist.
-
-## Currency
-
-Prices are stored as NGN base values. Admin can switch display between NGN and GBP in `/bima/admin`.
-
-GBP conversion uses ExchangeRate-API first when `EXCHANGE_RATE_API_KEY` is configured, with Frankfurter as a fallback. The app refreshes the NGN-to-GBP rate when GBP is enabled and the saved rate is at least one week old.
+- Phone: 070 7247 5343
+- WhatsApp: 0808 946 4118
+- Instagram: [@premium81985](https://www.instagram.com/premium81985)

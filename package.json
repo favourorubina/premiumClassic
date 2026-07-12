@@ -10,6 +10,8 @@
     "firebase:import-menu": "node scripts/import-menu-to-firebase.mjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "cloudinary": "^2.8.0",
     "firebase-admin": "^13.9.0",
     "lucide-react": "^0.561.0",

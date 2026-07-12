@@ -4,27 +4,13 @@ const ADMIN_PREFIX = '/bima/admin';
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isAdmin = req.cookies.get('pc_admin')?.value === '1';
+  const hasAdminSession = Boolean(req.cookies.get('pc_admin')?.value);
 
   if (pathname === ADMIN_PREFIX || pathname.startsWith(`${ADMIN_PREFIX}/`)) {
     const isLoginPage = pathname.startsWith(`${ADMIN_PREFIX}/login`);
-    if (!isAdmin && !isLoginPage) {
+    if (!hasAdminSession && !isLoginPage) {
       const loginUrl = new URL(`${ADMIN_PREFIX}/login`, req.url);
       return NextResponse.redirect(loginUrl);
-    }
-    if (isAdmin && isLoginPage) {
-      const dashboardUrl = new URL(ADMIN_PREFIX, req.url);
-      return NextResponse.redirect(dashboardUrl);
-    }
-  }
-
-  if (
-    pathname.startsWith('/api/menu-items') ||
-    pathname.startsWith('/api/admin/upload') ||
-    (pathname.startsWith('/api/site-settings') && req.method !== 'GET')
-  ) {
-    if (!isAdmin) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
   }
 
@@ -35,9 +21,5 @@ export const config = {
   matcher: [
     '/bima/admin',
     '/bima/admin/:path*',
-    '/api/menu-items/:path*',
-    '/api/admin/:path*',
-    '/api/site-settings',
-    '/api/site-settings/:path*',
   ],
 };
