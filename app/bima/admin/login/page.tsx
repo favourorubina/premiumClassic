@@ -18,6 +18,12 @@ export default function AdminLoginPage() {
     }).catch(() => undefined);
   }, [router]);
 
+  useEffect(() => {
+    if (!error) return;
+    const timeout = window.setTimeout(() => setError(''), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [error]);
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');

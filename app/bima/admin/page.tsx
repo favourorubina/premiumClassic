@@ -23,8 +23,10 @@ import {
   CurrencyCode,
   CurrencySettings,
   DEFAULT_CURRENCY_SETTINGS,
+  convertFromNaira,
   formatMoneyFromNaira,
   formatRateLabel,
+  getDisplayCurrency,
 } from '@/lib/currency-format';
 import { toTitleCase } from '@/lib/text';
 
@@ -38,6 +40,45 @@ const ADMIN_LOGIN_PATH = '/bima/admin/login';
 
 function createEmptyForm(): MenuForm {
   return { id: '', name: '', category: '', imageUrl: '', description: '', prices: [{ label: 'Standard', amount: '' }] };
+}
+
+function formatPriceInput(amount: number, currency: CurrencyCode) {
+  if (!Number.isFinite(amount) || amount <= 0) return '';
+  return currency === 'GBP' ? Number(amount.toFixed(2)).toString() : String(Math.round(amount));
+}
+
+function priceInputFromNaira(amount: number, settings: CurrencySettings) {
+  const currency = getDisplayCurrency(settings);
+  return formatPriceInput(convertFromNaira(amount, settings), currency);
+}
+
+function priceInputToNaira(value: string, settings: CurrencySettings) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('Add a valid price amount.');
+  }
+
+  if (getDisplayCurrency(settings) === 'GBP') {
+    const rate = Number(settings.ngnToGbpRate);
+    if (!Number.isFinite(rate) || rate <= 0) {
+      throw new Error('Save a valid GBP rate before editing GBP prices.');
+    }
+    return Math.round(amount / rate);
+  }
+
+  return Math.round(amount);
+}
+
+function convertPriceRows(rows: PriceFormOption[], fromSettings: CurrencySettings, toSettings: CurrencySettings) {
+  return rows.map(row => {
+    if (!row.amount) return row;
+    try {
+      const amountInNaira = priceInputToNaira(row.amount, fromSettings);
+      return { ...row, amount: priceInputFromNaira(amountInNaira, toSettings) };
+    } catch {
+      return row;
+    }
+  });
 }
 
 export default function AdminDashboard() {
@@ -113,6 +154,24 @@ export default function AdminDashboard() {
     };
   }, [imagePreview]);
 
+  useEffect(() => {
+    if (!notice) return;
+    const timeout = window.setTimeout(() => setNotice(''), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
+
+  useEffect(() => {
+    if (!error) return;
+    const timeout = window.setTimeout(() => setError(''), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [error]);
+
+  useEffect(() => {
+    if (!passwordError) return;
+    const timeout = window.setTimeout(() => setPasswordError(''), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [passwordError]);
+
   const categories = useMemo(() => Array.from(new Set([...BASE_CATEGORIES, ...items.map(item => item.category).filter(Boolean)])), [items]);
   const filteredItems = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -128,8 +187,10 @@ export default function AdminDashboard() {
 
   function normalizePrices(rows: PriceFormOption[]): PriceOption[] {
     return rows.map((row, index) => {
-      const amount = Number(row.amount);
-      if (!Number.isFinite(amount) || amount <= 0) {
+      let amount: number;
+      try {
+        amount = priceInputToNaira(row.amount, currencySettings);
+      } catch {
         throw new Error(`Add a valid amount for price option ${index + 1}.`);
       }
 
@@ -170,7 +231,7 @@ export default function AdminDashboard() {
       imageUrl: item.imageUrl,
       description: item.description || '',
       prices: item.pricesJson.length
-        ? item.pricesJson.map(price => ({ label: toTitleCase(price.label || 'Standard'), amount: String(price.amount || '') }))
+        ? item.pricesJson.map(price => ({ label: toTitleCase(price.label || 'Standard'), amount: priceInputFromNaira(price.amount, currencySettings) }))
         : [{ label: 'Standard', amount: '' }],
     });
     setImageFile(null);
@@ -245,6 +306,7 @@ export default function AdminDashboard() {
   }
 
   async function handleCurrencyChange(activeCurrency: CurrencyCode, refreshRate = false, manualRate?: number) {
+    const previousSettings = currencySettings;
     setSavingCurrency(true);
     setError('');
     try {
@@ -254,6 +316,7 @@ export default function AdminDashboard() {
       if (!response.ok) throw new Error(body?.message || 'Could not update currency.');
       setCurrencySettings(body);
       setExchangeRateInput(body.ngnToGbpRate ? String(body.ngnToGbpRate) : '');
+      setForm(previous => ({ ...previous, prices: convertPriceRows(previous.prices, previousSettings, body) }));
       setNotice('Store currency updated.');
     } catch (currencyError) {
       setError(currencyError instanceof Error ? currencyError.message : 'Could not update currency.');
@@ -271,6 +334,8 @@ export default function AdminDashboard() {
     handleCurrencyChange('GBP', false, rate);
   }
 
+  const priceCurrency = getDisplayCurrency(currencySettings);
+  const pricePlaceholder = priceCurrency === 'GBP' ? '5.00' : '10000';
   const hasValidPrices = form.prices.length > 0 && form.prices.every(price => Number(price.amount) > 0);
 
   async function handlePasswordChange(event: React.FormEvent) {
@@ -370,14 +435,14 @@ export default function AdminDashboard() {
               <label className="grid gap-1.5 text-xs font-extrabold sm:col-span-2">Description <span className="font-semibold text-[#8a755f]">(optional)</span><textarea rows={3} value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} placeholder="Short description for customers" className="pc-input min-h-20 resize-y" /></label>
               <div className="grid gap-2 sm:col-span-2">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-extrabold">Prices in NGN</p>
+                  <p className="text-xs font-extrabold">Prices in {priceCurrency}</p>
                   <button type="button" onClick={addPriceRow} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#3c2b1a24] bg-white px-2.5 text-[0.7rem] font-extrabold hover:border-[#98620f66]"><Plus className="h-3.5 w-3.5" /> Add price</button>
                 </div>
                 <div className="grid gap-2">
                   {form.prices.map((price, index) => (
                     <div key={index} className="grid gap-2 rounded-md border border-[#3c2b1a1f] bg-[#fbf6ee] p-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
                       <label className="grid gap-1 text-[0.7rem] font-extrabold">Option name<input value={price.label} onChange={event => updatePriceRow(index, 'label', event.target.value)} placeholder={index === 0 ? 'Standard' : 'Half dozen'} className="pc-input h-10 bg-white" /></label>
-                      <label className="grid gap-1 text-[0.7rem] font-extrabold">Amount<input required value={price.amount} onChange={event => updatePriceRow(index, 'amount', event.target.value.replace(/[^\d.]/g, ''))} inputMode="decimal" placeholder="10000" className="pc-input h-10 bg-white" /></label>
+                      <label className="grid gap-1 text-[0.7rem] font-extrabold">Amount ({priceCurrency})<input required value={price.amount} onChange={event => updatePriceRow(index, 'amount', event.target.value.replace(/[^\d.]/g, ''))} inputMode="decimal" placeholder={pricePlaceholder} className="pc-input h-10 bg-white" /></label>
                       <button type="button" onClick={() => removePriceRow(index)} disabled={form.prices.length === 1} className="grid h-10 w-10 place-items-center self-end rounded-md border border-[#3c2b1a24] bg-white text-[#716255] hover:border-red-200 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Remove price option"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   ))}

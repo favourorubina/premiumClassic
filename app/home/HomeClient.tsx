@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { ArrowRight, Gift, MessageCircle, ShoppingBag, Sparkles, Timer } from 'lucide-react';
-import { CurrencySettings, formatMoneyFromNaira } from '@/lib/currency-format';
+import type { CurrencySettings } from '@/lib/currency-format';
 import { toTitleCase } from '@/lib/text';
 
 const fallbackImage = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1400&q=85';
@@ -18,17 +18,11 @@ type MenuItem = {
   pricesJson: { label: string; amount: number }[];
 };
 
-function lowestPrice(item?: MenuItem) {
-  const prices = item?.pricesJson?.map(price => price.amount).filter(Boolean) || [];
-  return prices.length ? Math.min(...prices) : null;
-}
-
-export default function HomeClient({ items, currencySettings }: { items: MenuItem[]; currencySettings: CurrencySettings }) {
+export default function HomeClient({ items }: { items: MenuItem[]; currencySettings: CurrencySettings }) {
   const [heroIndex, setHeroIndex] = useState(0);
   const featuredItems = useMemo(() => (items.filter(item => item.imageUrl).length ? items.filter(item => item.imageUrl) : items).slice(0, 6), [items]);
   const heroItems = featuredItems.slice(0, 4);
   const activeHero = heroItems[heroIndex % Math.max(heroItems.length, 1)];
-  const heroPrice = lowestPrice(activeHero);
 
   const categoryGroups = useMemo(() => {
     const groups = new Map<string, MenuItem[]>();
@@ -38,8 +32,6 @@ export default function HomeClient({ items, currencySettings }: { items: MenuIte
     });
     return Array.from(groups.entries()).slice(0, 4);
   }, [items]);
-
-  const money = (amount: number) => formatMoneyFromNaira(amount, currencySettings);
 
   return (
     <div className="bg-[#f8f2e9]">
@@ -82,7 +74,6 @@ export default function HomeClient({ items, currencySettings }: { items: MenuIte
               {activeHero && (
                 <div className="ml-1 hidden min-w-0 self-center sm:block">
                   <p className="truncate text-xs font-extrabold text-white">{toTitleCase(activeHero.name)}</p>
-                  {heroPrice && <p className="text-[0.7rem] font-bold text-[#efc979]">From {money(heroPrice)}</p>}
                 </div>
               )}
             </div>
