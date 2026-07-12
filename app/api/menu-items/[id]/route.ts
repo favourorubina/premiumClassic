@@ -1,0 +1,61 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { deleteMenuItem, updateMenuItem, usingFirebaseMenuStore } from '@/lib/menu-store';
+import { isAdminRequest } from '@/lib/admin-auth';
+
+type RouteParams = {
+  params: Promise<{ id: string }>;
+};
+
+export async function PATCH(req: NextRequest, { params }: RouteParams) {
+  try {
+    if (!(await isAdminRequest(req))) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!usingFirebaseMenuStore()) {
+      return NextResponse.json(
+        { message: 'Firebase is not configured. Add credentials to .env.local first.' },
+        { status: 503 },
+      );
+    }
+
+    const { id } = await params;
+    const body = await req.json();
+    const { name, category, imageUrl, description, prices } = body;
+
+    if (!name || !category || !imageUrl || !Array.isArray(prices)) {
+      return NextResponse.json({ message: 'Invalid data' }, { status: 400 });
+    }
+
+    const item = await updateMenuItem(id, { name, category, imageUrl, description, prices });
+
+    return NextResponse.json(item);
+  } catch (error) {
+    console.error('PATCH /api/menu-items/[id] error', error);
+    return NextResponse.json({ message: 'Failed to update menu item' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  try {
+    if (!(await isAdminRequest(req))) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!usingFirebaseMenuStore()) {
+      return NextResponse.json(
+        { message: 'Firebase is not configured. Add credentials to .env.local first.' },
+        { status: 503 },
+      );
+    }
+
+    const { id } = await params;
+
+    await deleteMenuItem(id);
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('DELETE /api/menu-items/[id] error', error);
+    return NextResponse.json({ message: 'Failed to delete menu item' }, { status: 500 });
+  }
+}
