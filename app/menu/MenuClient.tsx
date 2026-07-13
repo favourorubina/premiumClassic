@@ -170,7 +170,7 @@ export default function MenuClient({ items, fallbackImage, currencySettings }: P
     const lines = [
       'Hello Premium Classic,', '', 'I would like to place this order:', '',
       ...cartItems.map(formatOrderLine),
-      '', 'Customer details:', `Name: ${customerName.trim()}`, `Phone: ${customerPhone.trim()}`, '', 'Please confirm availability and pickup or delivery details.',
+      '', 'Customer details:', `Name: ${customerName.trim()}`, `Phone: ${customerPhone.trim()}`, '', 'Thank you',
     ];
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
     setSubmitting(false);
