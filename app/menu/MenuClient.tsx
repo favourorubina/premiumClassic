@@ -41,29 +41,45 @@ function isValidNigerianPhone(phone: string) {
 }
 
 export default function MenuClient({ items, fallbackImage, currencySettings }: Props) {
-  const [storedOrder] = useState(readStoredOrder);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [query, setQuery] = useState('');
   const [activeItem, setActiveItem] = useState<MenuItem | null>(null);
   const [selectedVariant, setSelectedVariant] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [itemError, setItemError] = useState('');
-  const [cartItems, setCartItems] = useState<CartItem[]>(storedOrder.cartItems);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [customerName, setCustomerName] = useState(storedOrder.customerName);
-  const [customerPhone, setCustomerPhone] = useState(storedOrder.customerPhone);
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [storedOrderReady, setStoredOrderReady] = useState(false);
 
   const money = (amount: number) => formatMoneyFromNaira(amount, currencySettings);
 
   useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const storedOrder = readStoredOrder();
+      setCartItems(storedOrder.cartItems);
+      setCustomerName(storedOrder.customerName);
+      setCustomerPhone(storedOrder.customerPhone);
+      setStoredOrderReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!storedOrderReady) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ cartItems, customerName, customerPhone }));
     } catch {
       return;
     }
-  }, [cartItems, customerName, customerPhone]);
+  }, [cartItems, customerName, customerPhone, storedOrderReady]);
 
   const categories = useMemo(() => ['All', ...Array.from(new Set(items.map(item => item.category?.trim() || 'Others'))).sort((a, b) => a.localeCompare(b))], [items]);
   const filteredItems = useMemo(() => {
@@ -171,7 +187,7 @@ export default function MenuClient({ items, fallbackImage, currencySettings }: P
           <label className="relative block">
             <span className="sr-only">Search menu</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a755f]" />
-            <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search menu items" className="pc-input h-11 pl-10 pr-10" />
+            <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search menu items" className="pc-input pc-search-input h-11" />
             {query && <button type="button" onClick={() => setQuery('')} className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-[#716255] hover:bg-[#eee3d5]" aria-label="Clear search"><X className="h-4 w-4" /></button>}
           </label>
           <div className="pc-scrollbar flex gap-1.5 overflow-x-auto pb-1 lg:max-w-[46rem]">

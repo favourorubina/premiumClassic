@@ -131,6 +131,11 @@ a {
   box-shadow: 0 0 0 3px rgba(200, 138, 45, 0.18);
 }
 
+.pc-search-input {
+  padding-left: 2.5rem;
+  padding-right: 2.75rem;
+}
+
 .pc-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #c6ad8d transparent;
