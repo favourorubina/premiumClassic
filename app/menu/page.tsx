@@ -34,7 +34,7 @@ export default async function MenuPage() {
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#dcae5d]">Premium Classic menu</p>
             <h1 className="font-display mt-2 text-4xl font-semibold leading-tight text-white sm:text-5xl">Find your next favourite</h1>
-            <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-[#d9cbb5] sm:text-base">Search by name, filter by category, choose a size and build one clear WhatsApp order.</p>
+            <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-[#d9cbb5] sm:text-base">Search by name, and filter by category.</p>
           </div>
           <div className="flex max-w-md gap-3 border-l-2 border-[#dcae5d] pl-4">
             <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-[#dcae5d]" />
