@@ -5,6 +5,16 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LockKeyhole, LogIn } from 'lucide-react';
 
+const ADMIN_TAB_SESSION_KEY = 'premiumClassic.adminTabSession';
+
+function hasAdminTabSession() {
+  try {
+    return sessionStorage.getItem(ADMIN_TAB_SESSION_KEY) === 'active';
+  } catch {
+    return false;
+  }
+}
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [password, setPassword] = useState('');
@@ -13,6 +23,11 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!hasAdminTabSession()) {
+      fetch('/api/admin/logout', { method: 'POST' }).catch(() => undefined);
+      return;
+    }
+
     fetch('/api/admin/session').then(response => {
       if (response.ok) router.replace('/bima/admin');
     }).catch(() => undefined);
@@ -36,6 +51,12 @@ export default function AdminLoginPage() {
       });
       if (!response.ok) {
         setError('That password is not correct. Please try again.');
+        return;
+      }
+      try {
+        sessionStorage.setItem(ADMIN_TAB_SESSION_KEY, 'active');
+      } catch {
+        setError('Could not start this admin session. Please try again.');
         return;
       }
       router.replace('/bima/admin');

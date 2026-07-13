@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { Check, Minus, Plus, Search, ShoppingBag, Trash2, X } from 'lucide-react';
 import { Modal } from '@/components/Modal';
-import { CurrencySettings, formatMoneyFromNaira, formatRateLabel } from '@/lib/currency-format';
+import { CurrencySettings, formatMoneyFromNaira } from '@/lib/currency-format';
 import { toTitleCase } from '@/lib/text';
 
 type PriceOption = { label: string; amount: number };
@@ -38,6 +38,12 @@ function isValidName(name: string) {
 function isValidNigerianPhone(phone: string) {
   const digits = phone.replace(/\D/g, '');
   return (digits.startsWith('234') && digits.length === 13) || (digits.startsWith('0') && digits.length === 11);
+}
+
+function formatOrderLine(item: CartItem, index: number) {
+  const variant = item.variantLabel ? ` (${toTitleCase(item.variantLabel)})` : '';
+  const quantity = item.quantity > 1 ? ` x${item.quantity}` : '';
+  return `${index + 1}. ${toTitleCase(item.name)}${variant}${quantity}`;
 }
 
 export default function MenuClient({ items, fallbackImage, currencySettings }: Props) {
@@ -92,10 +98,6 @@ export default function MenuClient({ items, fallbackImage, currencySettings }: P
   }, [items, query, selectedCategory]);
   const cartTotal = useMemo(() => cartItems.reduce((sum, item) => sum + item.unitAmount * item.quantity, 0), [cartItems]);
   const cartCount = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity, 0), [cartItems]);
-  const currencyNote = useMemo(() => {
-    if (currencySettings.activeCurrency !== 'GBP' || !currencySettings.ngnToGbpRate) return null;
-    return `Prices shown in GBP (${formatRateLabel(currencySettings)}).`;
-  }, [currencySettings]);
 
   function openItemModal(item: MenuItem) {
     setActiveItem(item);
@@ -167,8 +169,8 @@ export default function MenuClient({ items, fallbackImage, currencySettings }: P
     setSubmitting(true);
     const lines = [
       'Hello Premium Classic,', '', 'I would like to place this order:', '',
-      ...cartItems.map((item, index) => `${index + 1}. ${toTitleCase(item.name)}${item.variantLabel ? ` - ${toTitleCase(item.variantLabel)}` : ''} x${item.quantity} (${money(item.unitAmount)} each) = ${money(item.unitAmount * item.quantity)}`),
-      '', `Total: ${money(cartTotal)}`, ...(currencyNote ? ['', currencyNote] : []), '', 'My details:', `- Name: ${customerName.trim()}`, `- Phone: ${customerPhone.trim()}`,
+      ...cartItems.map(formatOrderLine),
+      '', 'Customer details:', `Name: ${customerName.trim()}`, `Phone: ${customerPhone.trim()}`, '', 'Thank you',
     ];
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
     setSubmitting(false);

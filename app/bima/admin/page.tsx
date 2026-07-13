@@ -37,6 +37,23 @@ type MenuItem = { id: string; name: string; category: string; imageUrl: string; 
 
 const BASE_CATEGORIES = ['Parfait', 'Banana Bread', 'Pancake', 'Pastries', 'Shawarma', 'Cake Slice', 'Cake', 'Drinks'];
 const ADMIN_LOGIN_PATH = '/bima/admin/login';
+const ADMIN_TAB_SESSION_KEY = 'premiumClassic.adminTabSession';
+
+function hasAdminTabSession() {
+  try {
+    return sessionStorage.getItem(ADMIN_TAB_SESSION_KEY) === 'active';
+  } catch {
+    return false;
+  }
+}
+
+function clearAdminTabSession() {
+  try {
+    sessionStorage.removeItem(ADMIN_TAB_SESSION_KEY);
+  } catch {
+    return;
+  }
+}
 
 function createEmptyForm(): MenuForm {
   return { id: '', name: '', category: '', imageUrl: '', description: '', prices: [{ label: 'Standard', amount: '' }] };
@@ -134,8 +151,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function start() {
       try {
+        if (!hasAdminTabSession()) {
+          await fetch('/api/admin/logout', { method: 'POST' }).catch(() => undefined);
+          window.location.replace(ADMIN_LOGIN_PATH);
+          return;
+        }
+
         const session = await fetch('/api/admin/session');
         if (!session.ok) {
+          clearAdminTabSession();
           await fetch('/api/admin/logout', { method: 'POST' }).catch(() => undefined);
           window.location.replace(ADMIN_LOGIN_PATH);
           return;
@@ -366,6 +390,7 @@ export default function AdminDashboard() {
   }
 
   async function handleLogout() {
+    clearAdminTabSession();
     await fetch('/api/admin/logout', { method: 'POST' });
     window.location.replace(ADMIN_LOGIN_PATH);
   }
