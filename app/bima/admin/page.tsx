@@ -466,7 +466,7 @@ export default function AdminDashboard() {
             <header className="border-b border-[#3c2b1a1f] p-4">
               <div className="flex items-center justify-between gap-3"><div><h2 className="text-base font-extrabold">Menu library</h2><p className="mt-1 text-xs font-semibold text-[#716255]">{filteredItems.length} of {items.length} items</p></div></div>
               <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                <label className="relative"><span className="sr-only">Search menu</span><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a755f]" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search items" className="pc-input h-10 pl-9" /></label>
+                <label className="relative"><span className="sr-only">Search menu</span><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a755f]" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search items" className="pc-input pc-search-input h-10" />{query && <button type="button" onClick={() => setQuery('')} className="absolute right-1.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-[#716255] hover:bg-[#eee3d5]" aria-label="Clear search"><X className="h-3.5 w-3.5" /></button>}</label>
                 <select value={filterCategory} onChange={event => setFilterCategory(event.target.value)} className="pc-input h-10 sm:w-44"><option value="All">All categories</option>{categories.map(category => <option key={category} value={category}>{category}</option>)}</select>
               </div>
             </header>
