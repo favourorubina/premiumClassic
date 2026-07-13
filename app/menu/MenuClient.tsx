@@ -9,7 +9,7 @@ import { toTitleCase } from '@/lib/text';
 
 type PriceOption = { label: string; amount: number };
 type MenuItem = { id: string; name: string; category: string; imageUrl: string; description: string | null; pricesJson: PriceOption[] };
-type CartItem = { id: string; name: string; category: string; variantLabel: string | null; unitAmount: number; quantity: number };
+type CartItem = { id: string; name: string; category: string; variantLabel: string | null; unitAmount: number; quantity: number; showVariantLabel?: boolean };
 type Props = { items: MenuItem[]; fallbackImage: string; currencySettings: CurrencySettings };
 
 const WHATSAPP_NUMBER = '2348089464118';
@@ -40,8 +40,18 @@ function isValidNigerianPhone(phone: string) {
   return (digits.startsWith('234') && digits.length === 13) || (digits.startsWith('0') && digits.length === 11);
 }
 
+function isMeaningfulVariantLabel(label: string | null) {
+  if (!label) return false;
+  return !['price', 'regular', 'standard', 'default'].includes(label.trim().toLowerCase());
+}
+
+function shouldShowVariantLabel(item: MenuItem, option: PriceOption) {
+  return (item.pricesJson || []).length > 1 && Boolean(option.label?.trim());
+}
+
 function formatOrderLine(item: CartItem, index: number) {
-  const variant = item.variantLabel ? ` (${toTitleCase(item.variantLabel)})` : '';
+  const showVariant = item.showVariantLabel ?? isMeaningfulVariantLabel(item.variantLabel);
+  const variant = showVariant && item.variantLabel ? ` (${toTitleCase(item.variantLabel)})` : '';
   const quantity = item.quantity > 1 ? ` x${item.quantity}` : '';
   return `${index + 1}. ${toTitleCase(item.name)}${variant}${quantity}`;
 }
@@ -114,7 +124,8 @@ export default function MenuClient({ items, fallbackImage, currencySettings }: P
   }
 
   function addItemToCart(item: MenuItem, option: PriceOption, itemQuantity = 1) {
-    const variantLabel = option.label?.trim() || null;
+    const showVariantLabel = shouldShowVariantLabel(item, option);
+    const variantLabel = showVariantLabel ? option.label.trim() : null;
     setCartItems(previous => {
       const index = previous.findIndex(cartItem => cartItem.id === item.id && (cartItem.variantLabel || '') === (variantLabel || ''));
       if (index >= 0) {
@@ -122,7 +133,7 @@ export default function MenuClient({ items, fallbackImage, currencySettings }: P
         copy[index] = { ...copy[index], quantity: copy[index].quantity + itemQuantity };
         return copy;
       }
-      return [...previous, { id: item.id, name: item.name.trim(), category: item.category, variantLabel, unitAmount: option.amount, quantity: itemQuantity }];
+      return [...previous, { id: item.id, name: item.name.trim(), category: item.category, variantLabel, showVariantLabel, unitAmount: option.amount, quantity: itemQuantity }];
     });
   }
 
